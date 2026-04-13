@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button-Wedge Mapping - Visual Explanation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+        h2 {
+            color: #667eea;
+            margin-top: 0;
+        }
+        .diagram {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .formula {
+            background: #2d3748;
+            color: #a0aec0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .formula .keyword {
+            color: #63b3ed;
+        }
+        .formula .number {
+            color: #fbb6ce;
+        }
+        .formula .comment {
+            color: #68d391;
+        }
+        .step {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #48bb78;
+        }
+        .step-number {
+            display: inline-block;
+            background: #48bb78;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #667eea;
+            color: white;
+        }
+        tr:hover {
+            background: #f7fafc;
+        }
+        .grid-viz {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .viz-item {
+            text-align: center;
+        }
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .legend-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📐 Button-to-Wedge Mapping: Visual Explanation</h1>
+        
+        <div class="section">
+            <h2>🎯 Problem Statement</h2>
+            <p>Given a circular pie chart divided into colored wedges, we want to overlay a grid of buttons and determine which color each button should display based on which wedge it overlaps the most.</p>
+            
+            <div class="grid-viz">
+                <div class="viz-item">
+                    <h3>Input: Pie Chart</h3>
+                    <canvas id="input" width="300" height="300"></canvas>
+                    <p style="font-size: 13px; color: #666;">Circle with radius <strong>r</strong> divided into wedges</p>
+                </div>
+                <div class="viz-item">
+                    <h3>Output: Button Grid</h3>
+                    <canvas id="output" width="300" height="300"></canvas>
+                    <p style="font-size: 13px; color: #666;"><strong>N×M</strong> buttons colored by wedge overlap</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Key Parameters</h2>
+            <table>
+                <tr>
+                    <th>Parameter</th>
+                    <th>Symbol</th>
+                    <th>Description</th>
+                    <th>Example</th>
+                </tr>
+                <tr>
+                    <td>Circle Radius</td>
+                    <td><strong>r</strong></td>
+                    <td>Radius of the circular pie chart</td>
+                    <td>200 pixels</td>
+                </tr>
+                <tr>
+                    <td>Grid Rows</td>
+                    <td><strong>N</strong></td>
+                    <td>Number of button rows (vertical)</td>
+                    <td>15</td>
+                </tr>
+                <tr>
+                    <td>Grid Columns</td>
+                    <td><strong>M</strong></td>
+                    <td>Number of button columns (horizontal)</td>
+                    <td>15</td>
+                </tr>
+                <tr>
+                    <td>Button Width</td>
+                    <td><strong>w</strong></td>
+                    <td>Width of each button = 2r/M</td>
+                    <td>26.7 px</td>
+                </tr>
+                <tr>
+                    <td>Button Height</td>
+                    <td><strong>h</strong></td>
+                    <td>Height of each button = 2r/N</td>
+                    <td>26.7 px</td>
+                </tr>
+                <tr>
+                    <td>Sample Size</td>
+                    <td><strong>S</strong></td>
+                    <td>Sample points per button dimension</td>
+                    <td>7 (49 total samples)</td>
+                </tr>
+                <tr>
+                    <td>Threshold</td>
+                    <td><strong>T</strong></td>
+                    <td>Minimum overlap fraction for color assignment</td>
+                    <td>0.5 (50%)</td>
+                </tr>
+                <tr>
+                    <td>Angle Offset</td>
+                    <td><strong>θ₀</strong></td>
+                    <td>Rotation of circle (0 = 3 o'clock)</td>
+                    <td>π/2 (12 o'clock)</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>🔢 Core Formulas</h2>
+            
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Button Position</strong>
+                <p>For button at grid location <span class="highlight">(i, j)</span>:</p>
+                <div class="formula">
+<span class="keyword">x_min</span> = j × (<span class="number">2</span>r / M)<br>
+<span class="keyword">y_min</span> = i × (<span class="number">2</span>r / N)<br>
+<span class="keyword">x_max</span> = (j+<span class="number">1</span>) × (<span class="number">2</span>r / M)<br>
+<span class="keyword">y_max</span> = (i+<span class="number">1</span>) × (<span class="number">2</span>r / N)
+                </div>
+                <p style="font-size: 13px; margin-top: 10px;">Where i ∈ [0, N-1], j ∈ [0, M-1], and origin is at top-left of bounding box.</p>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Sample Point Generation</strong>
+                <p>For each sample index <span class="highlight">(si, sj)</span> where si, sj ∈ [0, S-1]:</p>
+                <div class="formula">
+<span class="keyword">x_sample</span> = x_min + (sj + <span class="number">0.5</span>) × (x_max - x_min) / S<br>
+<span class="keyword">y_sample</span> = y_min + (si + <span class="number">0.5</span>) × (y_max - y_min) / S
+                </div>
+                <div class="diagram">
+                    <canvas id="sampling" width="250" height="250"></canvas>
+                </div>
+                <p style="font-size: 13px; text-align: center;">Sample points at center of each sub-cell (shown as dots)</p>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Point-in-Circle Test</strong>
+                <p>Check if sample point is inside the circle:</p>
+                <div class="formula">
+<span class="keyword">dx</span> = x_sample - r  <span class="comment">// Offset from center</span><br>
+<span class="keyword">dy</span> = y_sample - r<br>
+<span class="keyword">distance</span> = √(dx² + dy²)<br>
+<span class="keyword">inside</span> = (distance ≤ r)
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">4</span>
+                <strong>Angle Calculation</strong>
+                <p>If inside circle, calculate angle from center:</p>
+                <div class="formula">
+<span class="keyword">θ_raw</span> = atan2(dy, dx)  <span class="comment">// Range: [-π, π]</span><br>
+<br>
+<span class="comment">// Normalize to [0, 2π)</span><br>
+<span class="keyword">θ_norm</span> = <span class="keyword">if</span> θ_raw ≥ <span class="number">0</span> <span class="keyword">then</span> θ_raw <span class="keyword">else</span> θ_raw + <span class="number">2</span>π<br>
+<br>
+<span class="comment">// Apply rotation offset</span><br>
+<span class="keyword">θ_final</span> = (θ_norm + θ₀) <span class="keyword">mod</span> <span class="number">2</span>π
+                </div>
+                <div class="diagram">
+                    <canvas id="angles" width="300" height="300"></canvas>
+                </div>
+                <p style="font-size: 13px; text-align: center;">Angle measurement with offset θ₀ = 90° (12 o'clock)</p>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">5</span>
+                <strong>Wedge Membership Test</strong>
+                <p>Determine which wedge contains this angle:</p>
+                <div class="formula">
+<span class="keyword">For each</span> wedge k <span class="keyword">with</span> (θ_start[k], θ_end[k]):<br>
+  <span class="keyword">if</span> θ_start[k] &lt; θ_end[k]:  <span class="comment">// Normal case</span><br>
+    <span class="keyword">match</span> = θ_start[k] ≤ θ_final &lt; θ_end[k]<br>
+  <span class="keyword">else</span>:  <span class="comment">// Wraparound case (crosses 0°)</span><br>
+    <span class="keyword">match</span> = θ_final ≥ θ_start[k] <span class="keyword">OR</span> θ_final &lt; θ_end[k]<br>
+  <br>
+  <span class="keyword">if</span> match:<br>
+    wedge_count[k] += <span class="number">1</span>
+                </div>
+            </div>
+            
+            <div class="step">
+                <span class="step-number">6</span>
+                <strong>Color Assignment</strong>
+                <p>Assign button color based on wedge with maximum overlap:</p>
+                <div class="formula">
+<span class="keyword">total_inside</span> = count(samples inside circle)<br>
+<span class="keyword">max_count</span> = max(wedge_count[k] <span class="keyword">for all</span> k)<br>
+<span class="keyword">overlap_fraction</span> = max_count / total_inside<br>
+<br>
+<span class="keyword">if</span> total_inside = <span class="number">0</span>:<br>
+  button_color = <span class="keyword">transparent</span>  <span class="comment">// Outside circle</span><br>
+<span class="keyword">else if</span> overlap_fraction ≥ T:<br>
+  button_color = color[k] <span class="keyword">where</span> wedge_count[k] = max_count<br>
+<span class="keyword">else</span>:<br>
+  button_color = <span class="keyword">transparent</span>  <span class="comment">// No clear majority</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📈 Example Calculation</h2>
+            <p><strong>Given:</strong></p>
+            <ul>
+                <li>r = 200 px, N = M = 15, S = 7, T = 0.5, θ₀ = π/2</li>
+                <li>Button (7, 7) - the center button</li>
+            </ul>
+            
+            <p><strong>Step-by-step:</strong></p>
+            <div class="formula">
+<span class="comment">1. Button bounds:</span><br>
+   x_min = 7 × (400/15) = 186.67 px<br>
+   y_min = 7 × (400/15) = 186.67 px<br>
+   width = height = 26.67 px<br>
+<br>
+<span class="comment">2. Sample center point (s=3, middle sample):</span><br>
+   x_sample = 186.67 + 3.5 × (26.67/7) = 200 px<br>
+   y_sample = 186.67 + 3.5 × (26.67/7) = 200 px<br>
+<br>
+<span class="comment">3. Point-in-circle test:</span><br>
+   dx = 200 - 200 = 0<br>
+   dy = 200 - 200 = 0<br>
+   distance = 0 ≤ 200 ✓ (inside)<br>
+<br>
+<span class="comment">4. Angle calculation:</span><br>
+   θ_raw = atan2(0, 0) = undefined (center point)<br>
+   <strong>Note:</strong> Center point touches ALL wedges equally<br>
+<br>
+<span class="comment">5. Result for all 49 samples:</span><br>
+   Samples distributed across all 8 wedges (≈6 each)<br>
+   max_count = 6, total_inside = 49<br>
+   overlap_fraction = 6/49 ≈ 0.12 &lt; 0.5<br>
+<br>
+<span class="comment">6. Color assignment:</span><br>
+   button_color = <strong>transparent</strong> (no clear majority)
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>💡 Key Insights</h2>
+            <ul style="line-height: 1.8;">
+                <li><strong>Sampling density (S):</strong> Higher S = more accurate but slower. S=7 gives ~2% error, which is acceptable.</li>
+                <li><strong>Threshold (T):</strong> T=0.5 means strict majority needed. Lower T (e.g., 0.4) gives fewer transparent buttons.</li>
+                <li><strong>Center buttons:</strong> Often transparent because they overlap all wedges equally (no majority).</li>
+                <li><strong>Edge buttons:</strong> Transparent when mostly outside the circle.</li>
+                <li><strong>Boundary buttons:</strong> May be transparent if they span multiple wedges without clear majority.</li>
+                <li><strong>Angle offset:</strong> θ₀ = π/2 (90°) starts wedges at 12 o'clock, matching most pie charts.</li>
+                <li><strong>Wraparound:</strong> Wedges crossing 0° need special handling (e.g., 315° to 45°).</li>
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h2>🎨 Visual Legend</h2>
+            <div id="legendContainer" class="legend"></div>
+        </div>
+        
+        <div class="section">
+            <h2>⚡ Power Apps Quick Reference</h2>
+            <div class="formula">
+<span class="comment">// Button color formula (paste into Fill property)</span><br>
+With({<br>
+  btnW: <span class="number">2</span> * circleRadius / gridM,<br>
+  btnH: <span class="number">2</span> * circleRadius / gridN,<br>
+  xMin: j * <span class="number">2</span> * circleRadius / gridM,<br>
+  yMin: i * <span class="number">2</span> * circleRadius / gridN<br>
+},<br>
+  <span class="comment">/* Use full formula from power_apps_ready_formula.txt */</span><br>
+)
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Draw input diagram
+        const inputCanvas = document.getElementById('input');
+        const inputCtx = inputCanvas.getContext('2d');
+        const radius = 120;
+        const centerX = 150;
+        const centerY = 150;
+        
+        const colors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#95E1D3', '#C7CEEA', '#FFDAC1', '#B4F8C8', '#FBE7C6'];
+        
+        // Draw wedges
+        for (let i = 0; i < 8; i++) {
+            const startAngle = i * Math.PI / 4 - Math.PI / 2;
+            const endAngle = (i + 1) * Math.PI / 4 - Math.PI / 2;
+            
+            inputCtx.fillStyle = colors[i];
+            inputCtx.beginPath();
+            inputCtx.moveTo(centerX, centerY);
+            inputCtx.arc(centerX, centerY, radius, startAngle, endAngle);
+            inputCtx.closePath();
+            inputCtx.fill();
+            
+            inputCtx.strokeStyle = '#fff';
+            inputCtx.lineWidth = 2;
+            inputCtx.stroke();
+        }
+        
+        // Draw output diagram
+        const outputCanvas = document.getElementById('output');
+        const outputCtx = outputCanvas.getContext('2d');
+        const gridSize = 10;
+        const btnSize = (2 * radius) / gridSize;
+        const offsetX = centerX - radius;
+        const offsetY = centerY - radius;
+        
+        for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+                const x = offsetX + j * btnSize;
+                const y = offsetY + i * btnSize;
+                const btnCenterX = x + btnSize / 2;
+                const btnCenterY = y + btnSize / 2;
+                const dist = Math.sqrt((btnCenterX - centerX) ** 2 + (btnCenterY - centerY) ** 2);
+                
+                if (dist <= radius) {
+                    const angle = Math.atan2(btnCenterY - centerY, btnCenterX - centerX) + Math.PI / 2;
+                    const normAngle = (angle + 2 * Math.PI) % (2 * Math.PI);
+                    const wedgeIdx = Math.floor(normAngle / (Math.PI / 4)) % 8;
+                    
+                    outputCtx.fillStyle = colors[wedgeIdx];
+                    outputCtx.fillRect(x, y, btnSize, btnSize);
+                }
+                
+                outputCtx.strokeStyle = '#ddd';
+                outputCtx.lineWidth = 1;
+                outputCtx.strokeRect(x, y, btnSize, btnSize);
+            }
+        }
+        
+        // Draw circle outline
+        outputCtx.strokeStyle = '#333';
+        outputCtx.lineWidth = 3;
+        outputCtx.beginPath();
+        outputCtx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        outputCtx.stroke();
+        
+        // Draw sampling diagram
+        const samplingCanvas = document.getElementById('sampling');
+        const samplingCtx = samplingCanvas.getContext('2d');
+        const btnX = 50;
+        const btnY = 50;
+        const btnW = 150;
+        const btnH = 150;
+        const samples = 7;
+        
+        // Draw button boundary
+        samplingCtx.strokeStyle = '#667eea';
+        samplingCtx.lineWidth = 3;
+        samplingCtx.strokeRect(btnX, btnY, btnW, btnH);
+        samplingCtx.fillStyle = 'rgba(102, 126, 234, 0.1)';
+        samplingCtx.fillRect(btnX, btnY, btnW, btnH);
+        
+        // Draw grid lines
+        samplingCtx.strokeStyle = '#ccc';
+        samplingCtx.lineWidth = 1;
+        for (let i = 1; i < samples; i++) {
+            const x = btnX + i * btnW / samples;
+            const y = btnY + i * btnH / samples;
+            samplingCtx.beginPath();
+            samplingCtx.moveTo(x, btnY);
+            samplingCtx.lineTo(x, btnY + btnH);
+            samplingCtx.stroke();
+            samplingCtx.beginPath();
+            samplingCtx.moveTo(btnX, y);
+            samplingCtx.lineTo(btnX + btnW, y);
+            samplingCtx.stroke();
+        }
+        
+        // Draw sample points
+        for (let si = 0; si < samples; si++) {
+            for (let sj = 0; sj < samples; sj++) {
+                const sx = btnX + (sj + 0.5) * btnW / samples;
+                const sy = btnY + (si + 0.5) * btnH / samples;
+                
+                samplingCtx.fillStyle = '#667eea';
+                samplingCtx.beginPath();
+                samplingCtx.arc(sx, sy, 3, 0, 2 * Math.PI);
+                samplingCtx.fill();
+            }
+        }
+        
+        // Draw angles diagram
+        const anglesCanvas = document.getElementById('angles');
+        const anglesCtx = anglesCanvas.getContext('2d');
+        const anglesCX = 150;
+        const anglesCY = 150;
+        const anglesR = 100;
+        
+        // Draw circle
+        anglesCtx.strokeStyle = '#333';
+        anglesCtx.lineWidth = 2;
+        anglesCtx.beginPath();
+        anglesCtx.arc(anglesCX, anglesCY, anglesR, 0, 2 * Math.PI);
+        anglesCtx.stroke();
+        
+        // Draw angle lines
+        const angles = [0, Math.PI/4, Math.PI/2, 3*Math.PI/4, Math.PI, 5*Math.PI/4, 3*Math.PI/2, 7*Math.PI/4];
+        const labels = ['0°', '45°', '90°', '135°', '180°', '225°', '270°', '315°'];
+        
+        angles.forEach((angle, i) => {
+            const offsetAngle = angle - Math.PI / 2;
+            const x = anglesCX + anglesR * Math.cos(offsetAngle);
+            const y = anglesCY + anglesR * Math.sin(offsetAngle);
+            
+            anglesCtx.strokeStyle = '#ccc';
+            anglesCtx.beginPath();
+            anglesCtx.moveTo(anglesCX, anglesCY);
+            anglesCtx.lineTo(x, y);
+            anglesCtx.stroke();
+            
+            const labelX = anglesCX + (anglesR + 25) * Math.cos(offsetAngle);
+            const labelY = anglesCY + (anglesR + 25) * Math.sin(offsetAngle);
+            anglesCtx.fillStyle = '#333';
+            anglesCtx.font = '12px Arial';
+            anglesCtx.textAlign = 'center';
+            anglesCtx.textBaseline = 'middle';
+            anglesCtx.fillText(labels[i], labelX, labelY);
+        });
+        
+        // Draw offset indicator
+        anglesCtx.strokeStyle = '#FF6B6B';
+        anglesCtx.lineWidth = 3;
+        anglesCtx.beginPath();
+        anglesCtx.moveTo(anglesCX, anglesCY);
+        anglesCtx.lineTo(anglesCX, anglesCY - anglesR);
+        anglesCtx.stroke();
+        
+        anglesCtx.fillStyle = '#FF6B6B';
+        anglesCtx.font = 'bold 14px Arial';
+        anglesCtx.fillText('Start (θ₀ = 90°)', anglesCX, anglesCY - anglesR - 20);
+        
+        // Center point
+        anglesCtx.fillStyle = '#333';
+        anglesCtx.beginPath();
+        anglesCtx.arc(anglesCX, anglesCY, 5, 0, 2 * Math.PI);
+        anglesCtx.fill();
+        
+        // Create legend
+        const legendContainer = document.getElementById('legendContainer');
+        colors.forEach((color, i) => {
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            
+            const box = document.createElement('div');
+            box.className = 'legend-box';
+            box.style.backgroundColor = color;
+            
+            const text = document.createElement('span');
+            const startDeg = i * 45;
+            const endDeg = (i + 1) * 45;
+            text.textContent = `Wedge ${i + 1}: ${startDeg}° - ${endDeg}°`;
+            
+            item.appendChild(box);
+            item.appendChild(text);
+            legendContainer.appendChild(item);
+        });
+    </script>
+</body>
+</html>
