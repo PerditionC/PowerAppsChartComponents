@@ -1,0 +1,159 @@
+Screens:
+  Screen1:
+    Properties:
+      Fill: =RGBA(255, 255, 255, 1)
+      Height: =816
+      LoadingSpinnerColor: =RGBA(0, 120, 212, 1)
+      Width: =1056
+    Children:
+      - cmpBarChart_1:
+          Control: CanvasComponent
+          ComponentName: cmpBarChart
+          Properties:
+            AccessibleLabel: ="Bar chart"
+            Caption: ="My Caption"
+            CaptionColor: ="black"
+            CategoryAxisTitle: ="Categories"
+            CategoryLabelAngle: =45
+            ChartBackgroundColor: ="#FAFAFA"
+            ChartBorderColor: ="#E0E0E0"
+            ChartMode: ="Grouped"
+            ChartShadow: =DropShadow.Semibold
+            ChartTitle: ="Bar Chart Title"
+            EmptyStateText: ="No data"
+            GroupGapRatio: =0.25
+            Height: =500
+            IsPrinting: =false
+            Items: |-
+              =Table(
+                { Order: 1, Category: "Q1", Series: "Product A", Value: 45, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 2, Category: "Q1", Series: "Product B", Value: 32, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 3, Category: "Q1", Series: "Product C", Value: 18, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 4, Category: "Q1", Series: "Trend", Value: 38, Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" },
+                { Order: 5, Category: "Q2", Series: "Product A", Value: 72, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 6, Category: "Q2", Series: "Product B", Value: 58, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 7, Category: "Q2", Series: "Product C", Value: 29, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 8, Category: "Q2", Series: "Trend", Value: 65, Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" },
+                { Order: 9, Category: "Q3", Series: "Product A", Value: 58, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 10, Category: "Q3", Series: "Product B", Value: 41, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 11, Category: "Q3", Series: "Product C", Value: 35, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 12, Category: "Q3", Series: "Trend", Value: 50, Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" },
+                { Order: 13, Category: "Q4", Series: "Product A", Value: 91, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 14, Category: "Q4", Series: "Product B", Value: 67, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 15, Category: "Q4", Series: "Product C", Value: 44, Color: "", DrawAs: "Bar", MarkerType: "" },
+                { Order: 16, Category: "Q4", Series: "Trend", Value: 80, Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" }
+              )
+            MajorTickInterval: =0
+            MinorTickInterval: =0
+            OnBarSelect: =
+            Orientation: ="Vertical"
+            PaddingBottom: =6
+            PaddingLeft: =6
+            PaddingRight: =6
+            PaddingTop: =6
+            Palette: |-
+              =Table(
+                { Value: "#2563EB" },
+                { Value: "#10B981" },
+                { Value: "#F59E0B" },
+                { Value: "#EF4444" },
+                { Value: "#8B5CF6" },
+                { Value: "#EC4899" },
+                { Value: "#14B8A6" },
+                { Value: "#F97316" }
+              )
+            SelectedBarKey: =""
+            ShowGridLines: =true
+            ShowValueLabels: =true
+            ValueAxisMax: =0
+            ValueAxisMin: =0
+            ValueAxisTitle: ="Value Axis"
+            Width: =700
+            X: =356
+            Y: =15
+      - cmpPieChart_6:
+          Control: CanvasComponent
+          ComponentName: cmpPieChart
+          Properties:
+            AccessibleLabel: ="Pie chart"
+            Caption: ="Description of what Pie Chart represents"
+            CaptionColor: ="black"
+            CenterLabelText: ="Center Label"
+            ChartBackgroundColor: ="#FAFAFA"
+            ChartBorderColor: ="#E0E0E0"
+            ChartShadow: =DropShadow.Semibold
+            ChartTitle: ="Pie Chart Title"
+            EmptyStateText: ="No data"
+            EndRotation: =360
+            ExplodeDistance: =5
+            Height: =402
+            IsPrinting: =Screen1.Printing
+            Items: |-
+              =Table(
+                { Order: 1, Key:"A", Label: "Alpha", Value: 15, Color: "", Explode: false },
+                { Order: 2, Key:"B", Label: "Beta",  Value: 25, Color: "", Explode: true  },
+                { Order: 3, Key:"C", Label: "Gamma", Value: 60, Color: "", Explode: false }
+              )
+            OnSliceSelect: =UpdateContext({pieChartSel:Self.SelectedSliceKey})
+            PaddingBottom: =6
+            PaddingLeft: =6
+            PaddingRight: =6
+            PaddingTop: =6
+            Palette: |-
+              =Table(
+                { Value: "#2563EB" },
+                { Value: "#10B981" },
+                { Value: "#F59E0B" },
+                { Value: "#EF4444" },
+                { Value: "#8B5CF6" },
+                { Value: "#EC4899" }
+              )
+            SelectedSliceKey: =cmpPieChartLegend_1.SelectedSliceKeyOut
+            ShowCenterLabel: =true
+            ShowWedgeLabel: =true
+            StartRotation: =15
+            StrokeColor: ="white"
+            StrokeWidth: =1
+            Width: =442
+      - cmpPieChartLegend_1:
+          Control: CanvasComponent
+          ComponentName: cmpPieChartLegend
+          Properties:
+            BackgroundColor: ="#FAFAFA"
+            BorderColor: ="#E0E0E0"
+            Height: =Self.SuggestedHeight //cmpPieChart_6.ChartDimension
+            Initialize: =If(Self.Initialized,false,true)
+            IsPrinting: =Screen1.Printing
+            LegendData: =cmpPieChart_6.LegendData
+            OnItemSelect: =
+            Orientation: =Layout.Vertical
+            PaddingBottom: =4
+            PaddingLeft: =4
+            PaddingRight: =4
+            PaddingTop: =4
+            SelectedSliceKey: =cmpPieChart_6.SelectedSlice.Key
+            ShadowSize: ="border"
+            ShowColorBlock: =true
+            ShowLabel: =true
+            ShowValue: =true
+            Width: =Self.SuggestedWidth //200
+            X: =158
+            Y: =417
+      - ButtonCanvas1_1:
+          Control: Button@0.0.45
+          Properties:
+            Height: =47
+            OnSelect: =Set(varPdfDoc,PDF(Screen1)); Navigate(scrPdfViewer);
+            Text: ="Generate PDF"
+            Visible: =!Screen1.Printing
+            Width: =176
+            X: =266
+            Y: =654
+      - ButtonCanvas2:
+          Control: Button@0.0.45
+          Properties:
+            Icon: ="Print"
+            OnSelect: =Print()
+            Text: ="Print"
+            Visible: =!Screen1.Printing
+            Y: =438

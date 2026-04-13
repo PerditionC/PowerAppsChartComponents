@@ -1,0 +1,466 @@
+ComponentDefinitions:
+  cmpPieChartLegend:
+    DefinitionType: CanvasComponent
+    CustomProperties:
+      BackgroundColor:
+        PropertyKind: Input
+        DisplayName: Background Color
+        Description: Fill color for the legend container background
+        DataType: Text
+        Default: ="#FAFAFA"
+      BorderColor:
+        PropertyKind: Input
+        DisplayName: Border Color
+        Description: Border color when ShadowSize is border
+        DataType: Text
+        Default: ="#E0E0E0"
+      Initialize:
+        PropertyKind: Input
+        DisplayName: Initialize
+        Description: a property when changed trigger a reset or initialization
+        RaiseOnReset: true
+        DataType: Boolean
+        Default: =If(Self.Initialized,false,true)
+      Initialized:
+        PropertyKind: Output
+        DisplayName: Initialized
+        Description: exposes flag to indicate initial Reset occurred
+        DataType: Boolean
+      IsPrinting:
+        PropertyKind: Input
+        DisplayName: Is Printing
+        Description: Set to Screen.Printing to hide the interactive layer for PDF/Print. When true, only the static gallery is visible.
+        DataType: Boolean
+        Default: =false
+      LegendData:
+        PropertyKind: Input
+        DisplayName: Legend Data
+        Description: 'Table from PieChart.LegendData. Expected fields: Order (Number), Key (Text), RGBColor (Text), Label (Text), Value (Number), Percent (Number), IsSelected (Boolean).'
+        RaiseOnReset: true
+        DataType: Table
+        Default: |-
+          =Table(
+            { Order: 1, Key: "A", RGBColor: "#2563EB", Label: "Alpha", Value: 15, Percent: 0.15, IsSelected: false },
+            { Order: 2, Key: "B", RGBColor: "#10B981", Label: "Beta",  Value: 25, Percent: 0.25, IsSelected: false },
+            { Order: 3, Key: "C", RGBColor: "#F59E0B", Label: "Gamma", Value: 60, Percent: 0.60, IsSelected: false }
+          )
+      OnItemSelect:
+        PropertyKind: Event
+        DisplayName: On Item Select
+        Description: Fires when a legend item is clicked
+        ReturnType: None
+        Default: =
+      Orientation:
+        PropertyKind: Input
+        DisplayName: Orientation
+        Description: Preferred layout orientation for the legend
+        RaiseOnReset: true
+        DataType: Text
+        Default: =Layout.Vertical
+      PaddingBottom:
+        PropertyKind: Input
+        DisplayName: Padding Bottom
+        Description: Space between bottom component edge and content
+        DataType: Number
+        Default: =4
+      PaddingLeft:
+        PropertyKind: Input
+        DisplayName: Padding Left
+        Description: Space between left component edge and content
+        DataType: Number
+        Default: =4
+      PaddingRight:
+        PropertyKind: Input
+        DisplayName: Padding Right
+        Description: Space between right component edge and content
+        DataType: Number
+        Default: =4
+      PaddingTop:
+        PropertyKind: Input
+        DisplayName: Padding Top
+        Description: Space between top component edge and content
+        DataType: Number
+        Default: =4
+      SelectedSliceKey:
+        PropertyKind: Input
+        DisplayName: Selected Slice Key (In)
+        Description: Inbound selection from PieChart. Set to cmpPieChart.SelectedKey to keep legend selection in sync with the chart.
+        RaiseOnReset: true
+        DataType: Text
+        Default: =""
+      SelectedSliceKeyOut:
+        PropertyKind: Output
+        DisplayName: Selected Slice Key (Out)
+        Description: The Key of the currently selected legend item. Feed this back to PieChart.SelectedSliceKey for two-way sync.
+        DataType: Text
+      ShadowSize:
+        PropertyKind: Input
+        DisplayName: Shadow Size
+        Description: Visual effect for legend container - shadow, border, or none
+        DataType: Text
+        Default: ="border"
+      ShowColorBlock:
+        PropertyKind: Input
+        DisplayName: Show Color Block
+        Description: Show the color swatch next to each legend item
+        DataType: Boolean
+        Default: =true
+      ShowLabel:
+        PropertyKind: Input
+        DisplayName: Show Label
+        Description: Show the text label for each legend item
+        RaiseOnReset: true
+        DataType: Boolean
+        Default: =true
+      ShowValue:
+        PropertyKind: Input
+        DisplayName: Show Value
+        Description: Show the numeric value for each legend item
+        RaiseOnReset: true
+        DataType: Boolean
+        Default: =true
+      SuggestedHeight:
+        PropertyKind: Output
+        DisplayName: Suggested Height
+        Description: Recommended height based on content and orientation
+        DataType: Number
+      SuggestedWidth:
+        PropertyKind: Output
+        DisplayName: Suggested Width
+        Description: Recommended width based on content and orientation
+        DataType: Number
+    Properties:
+      Height: =400
+      Initialized: =varInitialized
+      OnReset: |-
+        =Set(varInitialized,true);
+
+        // ====
+        // SECTION 0: SYNC INBOUND SELECTION
+        // ====
+        // If the parent PieChart pushes a selection key, adopt it.
+        // This runs on reset so the legend reflects the chart state.
+
+        Set(
+          varLegSelKey,
+          Coalesce(Self.SelectedSliceKey, "")
+        );
+
+        // ====
+        // SECTION 1: LAYOUT MODE
+        // ====
+        // Determine whether to use vertical or horizontal gallery layout.
+        // Vertical when the component is taller than wide (legend beside pie).
+        // Horizontal (multi-column wrap) when wider than tall (legend below pie).
+
+        Set(varPadT, Coalesce(Self.PaddingTop, 4));
+        Set(varPadB, Coalesce(Self.PaddingBottom, 4));
+        Set(varPadL, Coalesce(Self.PaddingLeft, 4));
+        Set(varPadR, Coalesce(Self.PaddingRight, 4));
+        Set(varIsVertical, Self.Height >= Self.Width);
+        Set(varRowH, 22);
+
+        // ====
+        // SECTION 2: COLUMN COUNT FOR HORIZONTAL MODE
+        // ====
+        // When laid out horizontally (wider than tall), use multi-column
+        // wrapping so the legend does not waste vertical space.
+        // Each column needs ~130px; clamp to [1, 4].
+
+        Set(
+          varWrapCount,
+          If(
+            varIsVertical,
+            1,
+            Min(4, Max(1, RoundDown((Self.Width - varPadL - varPadR) / 130, 0)))
+          )
+        );
+      SelectedSliceKeyOut: =varLegSelKey
+      SuggestedHeight: "=With(\r\n  {\r\n    _itemCount: CountRows(Self.LegendData),\r\n    _padT: Coalesce(Self.PaddingTop, 6),\r\n    _padB: Coalesce(Self.PaddingBottom, 6),\r\n    _itemH: 22  // Fixed item height\r\n  },\r\n  \r\n  If(\r\n    // VERTICAL ORIENTATION (tall, narrow)\r\n    Coalesce(Self.Orientation, Layout.Vertical) = Layout.Vertical,\r\n    \r\n    _padT + (_itemCount * _itemH) + _padB,\r\n    \r\n    // HORIZONTAL ORIENTATION (wide, short)\r\n    With(\r\n      {\r\n        // Calculate rows needed (assume 4 columns max)\r\n        _cols: Min(4, Max(1, _itemCount))\r\n      },\r\n    With(\r\n      {\r\n        _rows: RoundUp(_itemCount / _cols, 0)\r\n      },\r\n      \r\n      _padT + (_rows * _itemH) + _padB\r\n    )\r\n    )\r\n  )\r\n)"
+      SuggestedWidth: "=With(\r\n  {\r\n    _itemCount: CountRows(Self.LegendData),\r\n    _padL: Coalesce(Self.PaddingLeft, 6),\r\n    _padR: Coalesce(Self.PaddingRight, 6),\r\n    _showBlock: Coalesce(Self.ShowColorBlock, true),\r\n    _showLabel: Coalesce(Self.ShowLabel, true),\r\n    _showValue: Coalesce(Self.ShowValue, true),\r\n    _itemH: 22,  // Fixed item height\r\n    _blockW: 14, // Color block width\r\n    _spacing: 4  // Spacing between elements\r\n  },\r\n  \r\n  If(\r\n    // VERTICAL ORIENTATION (tall, narrow)\r\n    Coalesce(Self.Orientation, Layout.Vertical) = Layout.Vertical,\r\n\r\n    With(\r\n      {\r\n        _labelLens: Sort(ForAll(\r\n                ShowColumns(Self.LegendData,Label),\r\n                Len(Coalesce(Text(ThisRecord.Label), \"\")) * 9\r\n              ), Value, SortOrder.Descending)\r\n      },\r\n    With(\r\n      {\r\n        // Estimate max label width (7px per character, max 20 chars visible)\r\n        _maxLabelW: If(\r\n          _showLabel,\r\n          Min(\r\n            First(_labelLens).Value,\r\n            140  // Max label width cap\r\n          ),\r\n          0\r\n        ),\r\n        // Estimate value width (format: \"1,234\" = ~45px)\r\n        _maxValueW: If(_showValue, 50, 0)\r\n      },\r\n      \r\n      _padL +\r\n      If(_showBlock, _blockW + _spacing, 0) +\r\n      _maxLabelW +\r\n      If(_showLabel And _showValue, _spacing, 0) +\r\n      _maxValueW +\r\n      _padR\r\n    )\r\n    ),\r\n    \r\n    // HORIZONTAL ORIENTATION (wide, short)\r\n    With(\r\n      {\r\n        // Estimate item width for horizontal layout\r\n        _labelW: If(_showLabel, 80, 0),  // Average label width\r\n        _valueW: If(_showValue, 50, 0)\r\n      },\r\n      With(\r\n      {\r\n        _itemW: If(_showBlock, _blockW + _spacing, 0) + _labelW + \r\n                If(_showLabel And _showValue, _spacing, 0) + _valueW + 8,\r\n        // Assume 4 columns max for horizontal\r\n        _cols: Min(4, Max(1, _itemCount))\r\n      },\r\n      \r\n      _padL + (_cols * _itemW) + _padR\r\n    )\r\n    )\r\n  )\r\n)"
+      Width: =200
+    Children:
+      - cmpLeg_conRoot:
+          Control: GroupContainer@1.5.0
+          Variant: ManualLayout
+          Properties:
+            Height: =Parent.Height
+            Width: =Parent.Width
+          Children:
+            - cmpLeg_conStatic:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Height: =Parent.Height
+                  Width: =Parent.Width
+                Children:
+                  - cmpLeg_conBg:
+                      Control: GroupContainer@1.5.0
+                      Variant: ManualLayout
+                      Properties:
+                        BorderColor: |-
+                          =If(
+                            Coalesce(cmpPieChartLegend.ShadowSize, "none") = "border",
+                            ColorValue(Coalesce(cmpPieChartLegend.BorderColor, "#E0E0E0")),
+                            RGBA(0, 0, 0, 0)
+                          )
+                        BorderThickness: |-
+                          =If(
+                            Coalesce(cmpPieChartLegend.ShadowSize, "none") = "border",
+                            1,
+                            0
+                          )
+                        DropShadow: |-
+                          =If(
+                            Coalesce(cmpPieChartLegend.ShadowSize, "none") = "shadow",
+                            DropShadow.Regular,
+                            DropShadow.None
+                          )
+                        Fill: |-
+                          =If(
+                            Coalesce(cmpPieChartLegend.BackgroundColor, "") = "",
+                            RGBA(0, 0, 0, 0),
+                            ColorValue(cmpPieChartLegend.BackgroundColor)
+                          )
+                        Height: =Parent.Height
+                        RadiusBottomLeft: =6
+                        RadiusBottomRight: =6
+                        RadiusTopLeft: =6
+                        RadiusTopRight: =6
+                        Width: =Parent.Width
+                  - cmpLeg_galStatic:
+                      Control: Gallery@2.15.0
+                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        Default: =LookUp(cmpPieChartLegend.LegendData, Key=varLegSelKey)
+                        Height: =Parent.Height - varPadT - varPadB
+                        Items: =Sort(cmpPieChartLegend.LegendData, Order)
+                        ShowScrollbar: =false
+                        TemplateSize: =varRowH
+                        Width: =Parent.Width - varPadL - varPadR
+                        WrapCount: =varWrapCount
+                        X: =varPadL
+                        Y: =varPadT
+                      Children:
+                        - cmpLeg_rectStaticHover:
+                            Control: Rectangle@2.3.0
+                            Properties:
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              Fill: |-
+                                =If(
+                                  ThisItem.Key = varLegSelKey,
+                                  RGBA(0, 120, 212, 0.08),
+                                  RGBA(0, 0, 0, 0)
+                                )
+                              Height: =Parent.TemplateHeight
+                              Width: =Parent.TemplateWidth
+                        - cmpLeg_rectStaticSelBar:
+                            Control: Rectangle@2.3.0
+                            Properties:
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              Fill: =RGBA(0, 120, 212, 1)
+                              Height: =Parent.TemplateHeight - 1
+                              Visible: =ThisItem.Key = varLegSelKey
+                              Width: =3
+                        - cmpLeg_imgStaticSwatch:
+                            Control: Image@2.2.3
+                            Properties:
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              BorderStyle: =BorderStyle.None
+                              DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                              DisabledFill: =RGBA(0, 0, 0, 0)
+                              FocusedBorderThickness: =0
+                              Height: =Parent.TemplateHeight - 7
+                              HoverBorderColor: =RGBA(0, 0, 0, 0)
+                              HoverFill: =RGBA(0, 0, 0, 0)
+                              Image: |-
+                                ="data:image/svg+xml;utf8," &
+                                EncodeUrl(
+                                "<svg xmlns='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/14_white%2C_blue_rounded_rectangle.svg/960px-14_white%2C_blue_rounded_rectangle.svg.png' viewBox='0 0 14 14'>" &
+                                "<rect x='0' y='0' width='14' height='14' rx='3' ry='3' fill='" &
+                                ThisItem.RGBColor &
+                                "'/>" &
+                                "</svg>"
+                                )
+                              PressedBorderColor: =RGBA(0, 0, 0, 0)
+                              PressedFill: =RGBA(0, 0, 0, 0)
+                              Tooltip: |-
+                                ="<svg xmlns='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/14_white%2C_blue_rounded_rectangle.svg/960px-14_white%2C_blue_rounded_rectangle.svg.png' viewBox='0 0 14 14'>" &
+                                "<rect x='0' y='0' width='14' height='14' rx='3' ry='3' fill='" &
+                                ThisItem.RGBColor &
+                                "'/>" &
+                                "</svg>"
+                              Visible: =cmpPieChartLegend.ShowColorBlock
+                              Width: =14
+                              X: =6
+                              Y: =(Parent.TemplateHeight - Self.Height) / 2
+                        - cmpLeg_lblStaticLabel:
+                            Control: Label@2.5.1
+                            Properties:
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              Color: =RGBA(50, 49, 48, 1)
+                              DisabledColor: =RGBA(161, 159, 157, 1)
+                              Font: =Font.'Segoe UI'
+                              FontWeight: |-
+                                =If(
+                                  ThisItem.Key = varLegSelKey,
+                                  FontWeight.Semibold,
+                                  FontWeight.Normal
+                                )
+                              Height: =Parent.TemplateHeight
+                              PaddingBottom: =0
+                              PaddingLeft: =2
+                              PaddingRight: =2
+                              PaddingTop: =0
+                              Size: =10
+                              Text: =Coalesce(ThisItem.Label, ThisItem.Key, "?")
+                              Visible: =cmpPieChartLegend.ShowLabel
+                              Width: |-
+                                =Parent.TemplateWidth
+                                - If(cmpPieChartLegend.ShowColorBlock, 24, 4)
+                                - If(cmpPieChartLegend.ShowValue, cmpLeg_lblStaticValue.Width, 0)
+                              X: =If(cmpPieChartLegend.ShowColorBlock, 24, 4)
+                        - cmpLeg_lblStaticValue:
+                            Control: Label@2.5.1
+                            Properties:
+                              Align: =Align.Right
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              Color: =RGBA(96, 94, 92, 1)
+                              DisabledColor: =RGBA(161, 159, 157, 1)
+                              Font: =Font.'Segoe UI'
+                              FontWeight: |-
+                                =If(
+                                  ThisItem.Key = varLegSelKey,
+                                  FontWeight.Semibold,
+                                  FontWeight.Normal
+                                )
+                              Height: =Parent.TemplateHeight
+                              PaddingBottom: =0
+                              PaddingLeft: =0
+                              PaddingRight: =4
+                              PaddingTop: =0
+                              Size: =10
+                              Text: =Text(Coalesce(ThisItem.Value, 0))
+                              Visible: =cmpPieChartLegend.ShowValue
+                              Width: =Min(60, Max(36, Parent.TemplateWidth * 0.28))
+                              X: =Parent.TemplateWidth - Self.Width
+                        - cmpLeg_rectStaticSep:
+                            Control: Rectangle@2.3.0
+                            Properties:
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              Fill: =RGBA(235, 235, 235, 1)
+                              Height: =1
+                              Width: =Parent.TemplateWidth
+                              Y: =Parent.TemplateHeight - Self.Height
+            - cmpLeg_conInteractive:
+                Control: GroupContainer@1.5.0
+                Variant: ManualLayout
+                Properties:
+                  Height: =Parent.Height - varPadT - varPadB
+                  Visible: =Not(Coalesce(cmpPieChartLegend.IsPrinting, false))
+                  Width: =Parent.Width - varPadL - varPadR
+                  X: =varPadL
+                  Y: =varPadT
+                Children:
+                  - cmpLeg_galInteractive:
+                      Control: Gallery@2.15.0
+                      Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
+                      Properties:
+                        BorderColor: =RGBA(0, 0, 0, 0)
+                        Default: =cmpLeg_galStatic.Selected
+                        Height: =Parent.Height
+                        Items: =Sort(cmpPieChartLegend.LegendData, Order)
+                        OnSelect: |-
+                          =// Toggle selection: click to select, click again to deselect.
+                          If(
+                            varLegSelKey = cmpLeg_galInteractive.Selected.Key,
+                            Set(varLegSelKey, ""),
+                            Set(varLegSelKey, cmpLeg_galInteractive.Selected.Key)
+                          );
+                          cmpPieChartLegend.OnItemSelect()
+                        ShowScrollbar: =false
+                        TemplateSize: =varRowH
+                        Width: =Parent.Width
+                        WrapCount: =varWrapCount
+                      Children:
+                        - cmpLeg_rectInteractiveHover:
+                            Control: Rectangle@2.3.0
+                            Properties:
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              Fill: |-
+                                =If(
+                                  ThisItem.IsSelected,
+                                  RGBA(0, 120, 212, 0.08),
+                                  RGBA(0, 0, 0, 0)
+                                )
+                              Height: =Parent.TemplateHeight
+                              OnSelect: =Select(Parent)
+                              Width: =Parent.TemplateWidth
+                        - cmpLeg_btnHit:
+                            Control: Classic/Button@2.2.0
+                            Properties:
+                              BorderColor: =RGBA(0, 0, 0, 0)
+                              BorderStyle: =BorderStyle.None
+                              Color: =RGBA(0, 0, 0, 0)
+                              DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                              DisabledColor: =RGBA(0, 0, 0, 0)
+                              DisabledFill: =RGBA(0, 0, 0, 0)
+                              Fill: =RGBA(0, 0, 0, 0)
+                              Font: =Font.'Segoe UI'
+                              Height: =Parent.TemplateHeight
+                              HoverBorderColor: =RGBA(0, 0, 0, 0)
+                              HoverColor: =RGBA(0, 0, 0, 0)
+                              HoverFill: =RGBA(0, 120, 212, 0.06)
+                              OnSelect: =Select(Parent)
+                              PressedBorderColor: =RGBA(0, 0, 0, 0)
+                              PressedColor: =RGBA(0, 0, 0, 0)
+                              PressedFill: =RGBA(0, 120, 212, 0.12)
+                              RadiusBottomLeft: =0
+                              RadiusBottomRight: =0
+                              RadiusTopLeft: =0
+                              RadiusTopRight: =0
+                              Text: =""
+                              Width: =Parent.TemplateWidth
+      - cmpLeg_lblAccessible:
+          Control: Label@2.5.1
+          Properties:
+            BorderColor: =RGBA(0, 0, 0, 0)
+            Height: =1
+            PaddingBottom: =0
+            PaddingLeft: =0
+            PaddingRight: =0
+            PaddingTop: =0
+            Size: =1
+            Text: |-
+              ="Pie chart legend. " &
+              Concat(
+                Sort(cmpPieChartLegend.LegendData, Order),
+                Coalesce(Label, Key, "?") & ": " & Text(Coalesce(Value, 0)) & ", "
+              )
+            Visible: =false
+            Width: =1
+      - cmpPieChartLegend_timerReset:
+          Control: Timer@2.1.0
+          Properties:
+            AutoStart: =true
+            BorderColor: =RGBA(0, 120, 212, 1)
+            BorderStyle: =BorderStyle.None
+            Color: =RGBA(255, 255, 255, 1)
+            DisabledBorderColor: =RGBA(242, 242, 241, 0)
+            DisabledColor: =RGBA(161, 159, 157, 1)
+            DisabledFill: =RGBA(242, 242, 241, 0)
+            Duration: =10
+            Fill: =RGBA(0, 120, 212, 0)
+            Font: =Font.'Segoe UI'
+            Height: =0
+            HoverBorderColor: =RGBA(16, 110, 190, 1)
+            HoverColor: =RGBA(255, 255, 255, 1)
+            HoverFill: =RGBA(16, 110, 190, 0)
+            OnTimerEnd: =Reset(Parent);
+            PressedBorderColor: =RGBA(16, 110, 190, 1)
+            PressedColor: =RGBA(255, 255, 255, 1)
+            PressedFill: =RGBA(16, 110, 190, 0)
+            Text: ="" //Text(Time(0, 0, Self.Value/1000), "hh:mm:ss")
+            Visible: =false
+            Width: =1
