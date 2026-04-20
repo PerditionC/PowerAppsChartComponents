@@ -14,18 +14,6 @@ ComponentDefinitions:
         Description: Border color when ShadowSize is border
         DataType: Text
         Default: ="#E0E0E0"
-      Initialize:
-        PropertyKind: Input
-        DisplayName: Initialize
-        Description: a property when changed trigger a reset or initialization
-        RaiseOnReset: true
-        DataType: Boolean
-        Default: =If(Self.Initialized,false,true)
-      Initialized:
-        PropertyKind: Output
-        DisplayName: Initialized
-        Description: exposes flag to indicate initial Reset occurred
-        DataType: Boolean
       IsPrinting:
         PropertyKind: Input
         DisplayName: Is Printing
@@ -61,24 +49,28 @@ ComponentDefinitions:
         PropertyKind: Input
         DisplayName: Padding Bottom
         Description: Space between bottom component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =4
       PaddingLeft:
         PropertyKind: Input
         DisplayName: Padding Left
         Description: Space between left component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =4
       PaddingRight:
         PropertyKind: Input
         DisplayName: Padding Right
         Description: Space between right component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =4
       PaddingTop:
         PropertyKind: Input
         DisplayName: Padding Top
         Description: Space between top component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =4
       SelectedSliceKey:
@@ -103,6 +95,7 @@ ComponentDefinitions:
         PropertyKind: Input
         DisplayName: Show Color Block
         Description: Show the color swatch next to each legend item
+        RaiseOnReset: true
         DataType: Boolean
         Default: =true
       ShowLabel:
@@ -131,9 +124,9 @@ ComponentDefinitions:
         DataType: Number
     Properties:
       Height: =400
-      Initialized: =varInitialized
       OnReset: |-
-        =Set(varInitialized,true);
+        =// only show reset button for dev work
+        Set(debugResetVisible,true);
 
         // ====
         // SECTION 0: SYNC INBOUND SELECTION
@@ -277,7 +270,7 @@ ComponentDefinitions:
                               Image: |-
                                 ="data:image/svg+xml;utf8," &
                                 EncodeUrl(
-                                "<svg xmlns='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/14_white%2C_blue_rounded_rectangle.svg/960px-14_white%2C_blue_rounded_rectangle.svg.png' viewBox='0 0 14 14'>" &
+                                "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'>" &
                                 "<rect x='0' y='0' width='14' height='14' rx='3' ry='3' fill='" &
                                 ThisItem.RGBColor &
                                 "'/>" &
@@ -285,12 +278,7 @@ ComponentDefinitions:
                                 )
                               PressedBorderColor: =RGBA(0, 0, 0, 0)
                               PressedFill: =RGBA(0, 0, 0, 0)
-                              Tooltip: |-
-                                ="<svg xmlns='https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/14_white%2C_blue_rounded_rectangle.svg/960px-14_white%2C_blue_rounded_rectangle.svg.png' viewBox='0 0 14 14'>" &
-                                "<rect x='0' y='0' width='14' height='14' rx='3' ry='3' fill='" &
-                                ThisItem.RGBColor &
-                                "'/>" &
-                                "</svg>"
+                              Tooltip: =// see interactive layer
                               Visible: =cmpPieChartLegend.ShowColorBlock
                               Width: =14
                               X: =6
@@ -384,19 +372,6 @@ ComponentDefinitions:
                         Width: =Parent.Width
                         WrapCount: =varWrapCount
                       Children:
-                        - cmpLeg_rectInteractiveHover:
-                            Control: Rectangle@2.3.0
-                            Properties:
-                              BorderColor: =RGBA(0, 0, 0, 0)
-                              Fill: |-
-                                =If(
-                                  ThisItem.IsSelected,
-                                  RGBA(0, 120, 212, 0.08),
-                                  RGBA(0, 0, 0, 0)
-                                )
-                              Height: =Parent.TemplateHeight
-                              OnSelect: =Select(Parent)
-                              Width: =Parent.TemplateWidth
                         - cmpLeg_btnHit:
                             Control: Classic/Button@2.2.0
                             Properties:
@@ -421,6 +396,7 @@ ComponentDefinitions:
                               RadiusTopLeft: =0
                               RadiusTopRight: =0
                               Text: =""
+                              Tooltip: =ThisItem.Label & " (" & ThisItem.Value & ")" //" [" & ThisItem.RGBColor & "]"
                               Width: =Parent.TemplateWidth
       - cmpLeg_lblAccessible:
           Control: Label@2.5.1
@@ -464,3 +440,10 @@ ComponentDefinitions:
             Text: ="" //Text(Time(0, 0, Self.Value/1000), "hh:mm:ss")
             Visible: =false
             Width: =1
+      - btnReset_cmpPieChartLegend:
+          Control: Button@0.0.45
+          Properties:
+            OnSelect: =Reset(Parent)
+            Visible: =debugResetVisible // || true
+            X: =65
+            Y: =305

@@ -1,42 +1,40 @@
 ComponentDefinitions:
   cmpPieChart:
     DefinitionType: CanvasComponent
-    Description: Pie Chart
     CustomProperties:
       AccessibleLabel:
         PropertyKind: Input
         DisplayName: Accessible Label
         Description: Screen reader label for the chart
+        RaiseOnReset: true
         DataType: Text
         Default: ="Pie chart"
       Caption:
         PropertyKind: Input
         DisplayName: Caption
         Description: Optional text displayed below the chart; leave blank to hide
+        RaiseOnReset: true
         DataType: Text
         Default: ="Description of what Pie Chart represents"
       CaptionColor:
         PropertyKind: Input
         DisplayName: Caption Color
         Description: CSS color for the caption text
+        RaiseOnReset: true
         DataType: Text
         Default: ="black"
       CenterLabelText:
         PropertyKind: Input
         DisplayName: Center Label Text
         Description: Overrides the center label; blank shows total value
+        RaiseOnReset: true
         DataType: Text
         Default: ="Center Label"
-      ChartBackgroundColor:
-        PropertyKind: Input
-        DisplayName: Chart Background Color
-        Description: Fill color for the container behind the pie chart, title, and caption
-        DataType: Text
-        Default: ="#FAFAFA"
       ChartBorderColor:
         PropertyKind: Input
         DisplayName: Chart Border Color
-        Description: Border color when ChartShadowSize is border
+        Description: Border color used when Chart Shadow is DropShadow.None
+        RaiseOnReset: true
         DataType: Text
         Default: ="#E0E0E0"
       ChartDimension:
@@ -44,16 +42,25 @@ ComponentDefinitions:
         DisplayName: Chart Dimension
         Description: width and height of Pie
         DataType: Number
+      ChartFill:
+        PropertyKind: Input
+        DisplayName: Chart Fill
+        Description: Background fill color used for the chart container and donut hole
+        RaiseOnReset: true
+        DataType: Text
+        Default: ="#FAFAFA"
       ChartShadow:
         PropertyKind: Input
         DisplayName: Chart Shadow
-        Description: Visual effect for chart container - shadow, border, or none
+        Description: Drop shadow style for the chart container (DropShadow enum)
+        RaiseOnReset: true
         DataType: Text
         Default: =DropShadow.Semibold
       ChartTitle:
         PropertyKind: Input
         DisplayName: Chart Title
         Description: Text displayed as the chart heading
+        RaiseOnReset: true
         DataType: Text
         Default: ="Pie Chart Title"
       ChartX:
@@ -66,22 +73,32 @@ ComponentDefinitions:
         DisplayName: Chart Y
         Description: upper left corner Y of pie (excluding title and caption)
         DataType: Number
+      DonutHolePercent:
+        PropertyKind: Input
+        DisplayName: Donut Hole Percent
+        Description: 0-100 inner radius percentage for donut chart mode; 0 disables donut hole
+        RaiseOnReset: true
+        DataType: Number
+        Default: =If(IsBlank(Self.Caption), 0, 39)
       EmptyStateText:
         PropertyKind: Input
         DisplayName: Empty State Text
         Description: Message shown when Items is empty or total is zero
+        RaiseOnReset: true
         DataType: Text
         Default: ="No data"
       EndRotation:
         PropertyKind: Input
         DisplayName: End Rotation
         Description: Degrees at which the last slice ends; 360 = full circle, use 180 for gauge
+        RaiseOnReset: true
         DataType: Number
         Default: =360
       ExplodeDistance:
         PropertyKind: Input
         DisplayName: Explode Distance
         Description: How far exploded slices are pulled from center in viewBox units (0-100 space)
+        RaiseOnReset: true
         DataType: Number
         Default: =5
       HasSelection:
@@ -89,31 +106,38 @@ ComponentDefinitions:
         DisplayName: Has Selection
         Description: True when a slice is currently selected
         DataType: Boolean
-      IsEmpty:
+      IsItemsEmpty:
         PropertyKind: Output
-        DisplayName: Is Empty
+        DisplayName: Is Items Empty
         Description: True when Items is empty or total value is zero
         DataType: Boolean
       IsPrinting:
         PropertyKind: Input
-        DisplayName: IsPrinting
-        Description: set to Screen.Printing to hide nonprintable protions
+        DisplayName: Is Printing
+        Description: Set to Screen.Printing to hide non-printable portions
+        RaiseOnReset: true
         DataType: Boolean
         Default: =false
       Items:
         PropertyKind: Input
         DisplayName: Items
         Description: >-
-          Data table. Required columns: Order (Number), Key (Text), Label (Text), Value (Number).
+          Data table for slices.
 
-          Optional columns: Color (Text, CSS hex), Explode (Boolean).
+          Required fields: Key (Text) and Value (Number).
+
+          Alternate field names supported: X for Key, Y for Value.
+
+          Optional fields: Order (Number), Label (Text), Color (Text, CSS hex), Explode (Boolean).
+
+          Define Items using a superset schema (include both X/Y and Key/Value fields) so formulas using Coalesce or conditional field selection can safely reference either schema without non-existent field errors. Missing optional values are defaulted during reset.
         RaiseOnReset: true
         DataType: Table
         Default: |-
           =Table(
-            { Order: 1, Key:"A", Label: "Alpha", Value: 15, Color: "", Explode: false },
-            { Order: 2, Key:"B", Label: "Beta",  Value: 25, Color: "", Explode: true  },
-            { Order: 3, Key:"C", Label: "Gamma", Value: 60, Color: "", Explode: false }
+            { Order: 1, X: "A", Y: 15, Key: "A", Value: 15, Label: "Alpha", Color: "", Explode: false },
+            { Order: 2, X: "B", Y: 25, Key: "B", Value: 25, Label: "Beta",  Color: "", Explode: true  },
+            { Order: 3, X: "C", Y: 60, Key: "C", Value: 60, Label: "Gamma", Color: "", Explode: false }
           )
       LegendData:
         PropertyKind: Output
@@ -123,6 +147,23 @@ ComponentDefinitions:
 
           Fields: Order (Number), Key (Text), Color (Color), Value (Number), Percent (Number), IsSelected (Boolean).
         DataType: Table
+      LegendSortMode:
+        PropertyKind: Input
+        DisplayName: Legend Sort Mode
+        Description: >-
+          Controls legend output order.
+
+          Allowed values: MatchChart, Alphabetical, ByValue
+        RaiseOnReset: true
+        DataType: Text
+        Default: ="MatchChart"
+      MinLabelAngle:
+        PropertyKind: Input
+        DisplayName: Min Label Angle
+        Description: Minimum slice angle in degrees required before a wedge label is rendered
+        RaiseOnReset: true
+        DataType: Number
+        Default: =10
       OnSliceSelect:
         PropertyKind: Event
         DisplayName: On Slice Select
@@ -133,30 +174,35 @@ ComponentDefinitions:
         PropertyKind: Input
         DisplayName: Padding Bottom
         Description: Space between bottom component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =6
       PaddingLeft:
         PropertyKind: Input
         DisplayName: Padding Left
         Description: Space between left component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =6
       PaddingRight:
         PropertyKind: Input
         DisplayName: Padding Right
         Description: Space between right component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =6
       PaddingTop:
         PropertyKind: Input
         DisplayName: Padding Top
         Description: Space between top component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =6
       Palette:
         PropertyKind: Input
         DisplayName: Palette
         Description: Table of color strings cycled when a slice has no Color value
+        RaiseOnReset: true
         DataType: Table
         Default: |-
           =Table(
@@ -167,27 +213,30 @@ ComponentDefinitions:
             { Value: "#8B5CF6" },
             { Value: "#EC4899" }
           )
-      SelectedKey:
-        PropertyKind: Output
-        DisplayName: Selected Key
-        Description: The Key value of the currently selected slice
+      PercentFormat:
+        PropertyKind: Input
+        DisplayName: Percent Format
+        Description: Power Fx numeric format string used when rendering percentages in wedge labels, tooltips, and legend values
+        RaiseOnReset: true
         DataType: Text
+        Default: ="[$-en-US]0.0%"
+      SelectedKey:
+        PropertyKind: Input
+        DisplayName: Selected Key
+        Description: The Key value of the currently selected slice (in)
+        RaiseOnReset: true
+        DataType: Text
+        Default: =""
       SelectedSlice:
         PropertyKind: Output
         DisplayName: Selected Slice
         Description: Full record of the currently selected slice from Items
         DataType: Record
-      SelectedSliceKey:
-        PropertyKind: Input
-        DisplayName: Selected Slice Key
-        Description: Set this to the Key of a slice to select it externally (e.g. from a legend component). Works alongside internal button selection.
-        RaiseOnReset: true
-        DataType: Text
-        Default: =""
       ShowCenterLabel:
         PropertyKind: Input
         DisplayName: Show Center Label
         Description: Controls whether the center value label is visible
+        RaiseOnReset: true
         DataType: Boolean
         Default: =true
       ShowWedgeLabel:
@@ -202,22 +251,32 @@ ComponentDefinitions:
         DisplayName: Slice Count
         Description: Number of slices in Items
         DataType: Number
+      SortByValue:
+        PropertyKind: Input
+        DisplayName: Sort By Value
+        Description: When true, default ordering follows Value (descending); otherwise source sequence is used
+        RaiseOnReset: true
+        DataType: Boolean
+        Default: =false
       StartRotation:
         PropertyKind: Input
         DisplayName: Start Rotation
         Description: Clockwise degrees from 12 o'clock where the first slice begins. 0 = top (12 o'clock), 90 = right (3 o'clock).
+        RaiseOnReset: true
         DataType: Number
         Default: =15
       StrokeColor:
         PropertyKind: Input
         DisplayName: Stroke Color
         Description: CSS color string for the border between slices
+        RaiseOnReset: true
         DataType: Text
         Default: ="white"
       StrokeWidth:
         PropertyKind: Input
         DisplayName: Stroke Width
         Description: Width of the border between slices in viewBox units
+        RaiseOnReset: true
         DataType: Number
         Default: =1
       SvgMarkup:
@@ -236,27 +295,540 @@ ComponentDefinitions:
       ChartY: =cmpPieChart_imgChart.Y
       HasSelection: =varHoveredKey <> ""
       Height: =400
-      IsEmpty: |-
-        =IsEmpty(cmpPieChart.Items) Or
-        Sum(cmpPieChart.Items, Coalesce(Value, 0)) = 0
+      IsItemsEmpty: |-
+        =IsEmpty(varItemsSorted) Or
+        Sum(varItemsSorted, Coalesce(Value, 0)) = 0
       LegendData: |-
-        =AddColumns(
-          Sort(varSlices, Order),
-          Percent,
-            If(
-              WedgeTotal > 0,
-              Value / WedgeTotal,
-              0
-            ),
-          IsSelected,
-            Key = varHoveredKey
+        =With(
+          {
+            _legendBase:
+              AddColumns(
+                varSlices,
+                Percent,
+                  If(
+                    WedgeTotal > 0,
+                    Value / WedgeTotal,
+                    0
+                  ),
+                PercentText,
+                  Text(
+                    If(
+                      WedgeTotal > 0,
+                      Value / WedgeTotal,
+                      0
+                    ),
+                    Coalesce(Self.PercentFormat, "[$-en-US]0.0%")
+                  ),
+                ValueText,
+                  Text(Value) & " (" &
+                  Text(
+                    If(
+                      WedgeTotal > 0,
+                      Value / WedgeTotal,
+                      0
+                    ),
+                    Coalesce(Self.PercentFormat, "[$-en-US]0.0%")
+                  ) & ")",
+                IsSelected,
+                  Key = varHoveredKey
+              )
+          },
+          Switch(
+            Coalesce(Self.LegendSortMode, "MatchChart"),
+            "Alphabetical",
+              SortByColumns(_legendBase, "Key", SortOrder.Ascending, "Order", SortOrder.Ascending),
+            "ByValue",
+              SortByColumns(_legendBase, "Value", SortOrder.Descending, "Order", SortOrder.Ascending),
+            SortByColumns(_legendBase, "Order", SortOrder.Ascending)
+          )
         )
-      OnReset: "=// only show reset button for dev work\nSet(debugResetVisible,true);\n\n// ====\n// SECTION 0: EXTERNAL SELECTION SYNC\n// ====\n// If SelectedSliceKey is set externally, apply it.\n\nIf(\n  Coalesce(Self.SelectedSliceKey, \"\") <> \"\",\n  Set(varHoveredKey, Self.SelectedSliceKey)\n);\n\n// ====\n// SECTION 1: PADDING AND TEXT HEIGHTS\n// ====\n// Cache padding values and compute heights for title and caption\n// so the chart area can be reduced to prevent overlap.\n\nSet(varPadT, Coalesce(Self.PaddingTop, 6));\nSet(varPadB, Coalesce(Self.PaddingBottom, 6));\nSet(varPadL, Coalesce(Self.PaddingLeft, 6));\nSet(varPadR, Coalesce(Self.PaddingRight, 6));\nSet(varTitleH,   If(IsBlank(Self.ChartTitle), 0, 24));\nSet(varCaptionH, If(IsBlank(Self.Caption), 0, 30));\n\n// ====\n// SECTION 2: CHART GEOMETRY\n// ====\n// The usable area is the component minus padding, title, and caption.\n// No legend - ChartSize is the largest square that fits.\n\nWith(\n  {\n    _usableW: Self.Width  - varPadL - varPadR,\n    _usableH: Self.Height - varPadT - varPadB - varTitleH - varCaptionH\n  },\n\n  Set(ChartSize,    Min(_usableW, _usableH));\n  Set(ChartCenterX, varPadL + ChartSize / 2);\n  Set(ChartCenterY, varPadT + varTitleH + ChartSize / 2)\n);\n\nSet(PieRadius, ChartSize / 2);\n\n// ====\n// SECTION 3: GRID PARAMETERS FOR BUTTON HIT LAYER\n// ====\nSet(gridN,      Min(15, Max(10, RoundDown(ChartSize / 20, 0))));\nSet(gridM,      gridN);\nSet(sampleSize, 7);\nSet(threshold,  0.4);\n\n// ====\n// SECTION 4: WEDGE MATH SCALARS\n// ====\nSet(WedgeTotal,    Sum(Self.Items, Coalesce(Value, 0)));\nIf(WedgeTotal = 0, Set(WedgeTotal,1)); // avoid divide by 0 error later on\nSet(WedgeStartRad, Coalesce(Self.StartRotation, 0) * Pi() / 180);\nSet(ArcScale,      Coalesce(Self.EndRotation, 360) / 360);\n\n// ====\n// SECTION 5: SVG RADIUS WITH EXPLODE MARGIN\n// ====\n// Reduce the SVG-space pie radius so that exploded slices\n// stay within the 0-100 viewBox and are not cropped.\n\nSet(varSvgR,    Max(10, 48 - Coalesce(Self.ExplodeDistance, 5)));\nSet(varSvgRTxt, Max(10, 30 - Coalesce(Self.ExplodeDistance, 5)));\n\n// ====\n// SECTION 6: BUILD varSlices\n// ====\nSet(palCount, CountRows(Self.Palette));\nSet(\n    varSlices,\n    ForAll(\n      Self.Items,\n      With(\n        {\n          _cumSum:\n            Coalesce(\n            Sum(\n            AddColumns(\n            Filter(Self.Items As SliceRecord,\n            Coalesce(SliceRecord.Order, 0) < Coalesce(ThisRecord.Order, 0)\n            ),\n            _valueT, Coalesce(Value, 0)\n            ),\n            _valueT\n            ),\n            0\n            )\n        },\n        With(\n          {\n            _value:      Coalesce(Value, 0),\n            _explode:    Coalesce(Explode, false),\n            _explodeDist: Coalesce(Self.ExplodeDistance, 5),\n            _startAngle: WedgeStartRad\n            + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))\n            * 2 * Pi() * ArcScale,\n            _color:\n            Coalesce(\n            If(Color <> \"\", Color, Blank()),\n            Index(\n            Self.Palette,\n            Mod(Coalesce(Order, 1) - 1,\n            If(palCount = 0, 1, palCount)) + 1\n            ).Value,\n            \"#D1D5DB\"\n            )\n          },\n          With(\n            {\n            _sliceArc: (_value / If(WedgeTotal = 0, 1, WedgeTotal))\n            * 2 * Pi() * ArcScale,\n            _endAngle: WedgeStartRad\n            + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))\n            * 2 * Pi() * ArcScale\n            + (_value / If(WedgeTotal = 0, 1, WedgeTotal))\n            * 2 * Pi() * ArcScale\n            },\n            With(\n            {\n            _midAngle: WedgeStartRad\n            + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))\n            * 2 * Pi() * ArcScale\n            + (_value / If(WedgeTotal = 0, 1, WedgeTotal))\n            * Pi() * ArcScale\n            },\n            With(\n            {\n            _offsetX: If(_explode,  _explodeDist * Sin(_midAngle), 0),\n            _offsetY: If(_explode, -(_explodeDist * Cos(_midAngle)), 0)\n            },\n            With(\n            {\n            _label: Coalesce(Label, Text(Key), \"?\"),\n            _valText: Text(Coalesce(_value, 0))\n            },\n            {\n            Order:      Coalesce(Order, 0),\n            Key:        Coalesce(Text(Key), Text(Order), \"\"),\n            Label:      Coalesce(Text(Label), Text(Key), \"\"),\n            Value:      _value,\n            RGBColor:   _color,\n            Explode:    _explode,\n            Color:      ColorValue(_color),\n            StartAngle: _startAngle,\n            EndAngle:   _endAngle,\n            MidAngle:   _midAngle,\n            NormStart:  Mod(_startAngle, 2 * Pi()),\n            NormEnd:    Mod(_endAngle,   2 * Pi()),\n            OffsetX:    _offsetX,\n            OffsetY:    _offsetY,\n            X1: Text(50 + varSvgR * Sin(_startAngle), \"[$-en-US]0.0000\"),\n            Y1: Text(50 - varSvgR * Cos(_startAngle), \"[$-en-US]0.0000\"),\n            X2: Text(50 + varSvgR * Sin(_endAngle),   \"[$-en-US]0.0000\"),\n            Y2: Text(50 - varSvgR * Cos(_endAngle),   \"[$-en-US]0.0000\"),\n            MidX: Text(50 + varSvgRTxt * Sin(_midAngle) + _offsetX, \"[$-en-US]0.0000\"),\n            MidY: Text(50 - varSvgRTxt * Cos(_midAngle) + _offsetY, \"[$-en-US]0.0000\"),\n            LabelX: Text(50 + (varSvgR * 0.65) * Sin(_midAngle) + _offsetX, \"[$-en-US]0.0000\"),\n            LabelY: Text(50 - (varSvgR * 0.65) * Cos(_midAngle) + _offsetY, \"[$-en-US]0.0000\"),\n            tooltip: _label & \": \" & _valText & \" (\" & Text((100 * _value / WedgeTotal), \"[$-en-US]0%\") & \")\"\n            }\n            )\n            )\n          )\n          )\n        )\n      )\n    )\n);\n\n// ====\n// SECTION 7: BUILD varSVG\n// ====\nSet(\n  varSVG,\n  If(\n    Or(WedgeTotal <= 0, IsEmpty(varSlices)),\n    // Empty state SVG (unchanged)\n    \"<​svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>\" &\n    \"<​circle cx='50' cy='50' r='48' fill='#F3F4F6' stroke='#E5E7EB' stroke-width='1'/>\" &\n    \"<​path d='M 50 50 L 50 2 A 48 48 0 0 1 91.6 26 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>\" &\n    \"<​path d='M 50 50 L 91.6 26 A 48 48 0 0 1 91.6 74 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>\" &\n    \"<​path d='M 50 50 L 91.6 74 A 48 48 0 0 1 50 98 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>\" &\n    \"<​path d='M 50 50 L 50 98 A 48 48 0 0 1 8.4 74 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>\" &\n    \"<​path d='M 50 50 L 8.4 74 A 48 48 0 0 1 8.4 26 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>\" &\n    \"<​path d='M 50 50 L 8.4 26 A 48 48 0 0 1 50 2 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>\" &\n    \"<​/svg>\",\n    \n    // Data SVG with wedges and optional labels\n    \"<​svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>\" &\n    \n    // Draw all wedge paths\n    Concat(\n      Sort(varSlices, Order),\n      \"<path transform='translate(\" &\n      Text(OffsetX, \"[$-en-US]0.0000\") & \",\" &\n      Text(OffsetY, \"[$-en-US]0.0000\") &\n      \")' d='M 50 50 L \" &\n      X1 & \" \" & Y1 &\n      \" A \" & Text(varSvgR, \"[$-en-US]0.0###\") & \" \" & Text(varSvgR, \"[$-en-US]0.0###\") & \" 0 \" &\n      If((EndAngle - StartAngle) > Pi(), \"1\", \"0\") &\n      \" 1 \" &\n      X2 & \" \" & Y2 &\n      \" Z' fill='\" & RGBColor &\n      \"' stroke='\" & Coalesce(Self.StrokeColor, \"white\") &\n      \"' stroke-width='\" &\n      Text(Coalesce(Self.StrokeWidth, 1), \"[$-en-US]0.0#\") &\n      \"'/>\"\n    ) &\n    \n    // Draw wedge labels (if enabled and wedge is large enough)\n    If(\n      Coalesce(Self.ShowWedgeLabel, false),\n      Concat(\n        Sort(varSlices, Order),\n        If(\n          (EndAngle - StartAngle) >= 0.26,  // Minimum ~15 degrees (0.26 radians)\n          \"<​text x='\" & LabelX &\n          \"' y='\" & LabelY &\n          \"' text-anchor='middle' dominant-baseline='middle' fill='white' font-size='5' font-family='Segoe UI' font-weight='600'>\" &\n          Label &\n          \"<​/text>\",\n          \"\"\n        )\n      ),\n      \"\"\n    ) &\n    \n    \"<​/svg>\"\n  )\n);\n\nSet(varHoveredKey, If(Coalesce(varHoveredKey, \"\") = \"\", \"\", varHoveredKey));\n\n// ====\n// SECTION 8: BUILD varButtonSlices\n// ====\nSet(btnW,   2 * PieRadius / gridM);\nSet(btnH,   2 * PieRadius / gridN);\nSet(gridOX, ChartCenterX - PieRadius);\nSet(gridOY, ChartCenterY - PieRadius);\n// adjust to match pie if shrunk some for exploded pieces\nSet(PieRadiusAdjusted, PieRadius * varSvgR/50);\nSet(r2,     PieRadiusAdjusted * PieRadiusAdjusted);\n\nSet(\n  varButtonSlices,\n  ForAll(\n    Sequence(gridN * gridM) As cell,\n\n    With(\n      {\n        _i:    RoundDown((cell.Value - 1) / gridM, 0),\n        _j:    Mod(cell.Value - 1, gridM),\n        _xMin: gridOX + Mod(cell.Value - 1, gridM) * btnW,\n        _yMin: gridOY + RoundDown((cell.Value - 1) / gridM, 0) * btnH\n      },\n\n      // ====\n      // IMPLEMENTATION A: single center-point Atan2 per cell\n      // ====\n      // Uncomment this block and comment out Implementation B to use.\n      /*\n      With(\n        {\n          _sx: _xMin + btnW / 2,\n          _sy: _yMin + btnH / 2\n        },\n        With(\n          {\n            _dx:  _sx - ChartCenterX,\n            _ndy: ChartCenterY - _sy,\n            _d2:  Power(_sx - ChartCenterX, 2) + Power(ChartCenterY - _sy, 2)\n          },\n          If(\n            _d2 <= r2 And _d2 > 0,\n            With(\n            {\n            _angle: Mod(\n            If(\n            _ndy > 0,       Atan(_dx / _ndy),\n            _ndy < 0 And _dx >= 0, Atan(_dx / _ndy) + Pi(),\n            _ndy < 0,       Atan(_dx / _ndy) - Pi(),\n            _dx > 0,        Pi() / 2,\n            -Pi() / 2\n            ) + 2 * Pi(),\n            2 * Pi()\n            )\n            },\n            {\n            Ni: _i,\n            Mj: _j,\n            SliceOrder:\n            Coalesce(\n            LookUp(\n            varSlices,\n            If(\n            NormStart < NormEnd,\n            _angle >= NormStart And _angle < NormEnd,\n            _angle >= NormStart Or  _angle < NormEnd\n            )\n            ).Order,\n            Blank()\n            )\n            }\n            ),\n            { Ni: _i, Mj: _j, SliceOrder: Blank() }\n          )\n        )\n      )\n      */\n\n      // ====\n      // IMPLEMENTATION B: sub-sample majority vote  [ACTIVE]\n      // ====\n      With(\n        {\n          _hits:\n            ForAll(\n            Sequence(sampleSize * sampleSize) As s,\n            {\n            wedge:\n            With(\n            {\n            _sx: _xMin\n            + (RoundDown((s.Value - 1) / sampleSize, 0) + 0.5)\n            * btnW / sampleSize,\n            _sy: _yMin\n            + (Mod(s.Value - 1, sampleSize) + 0.5)\n            * btnH / sampleSize\n            },\n            With(\n            {\n            _dx:  _sx - ChartCenterX,\n            _ndy: ChartCenterY - _sy,\n            _d2:  Power(_sx - ChartCenterX, 2)\n            + Power(ChartCenterY - _sy, 2)\n            },\n            If(\n            _d2 <= r2 And _d2 > 0,\n            With(\n            {\n            _angle: Mod(\n            If(\n            _ndy > 0,\n            Atan(_dx / _ndy),\n            _ndy < 0 And _dx >= 0,\n            Atan(_dx / _ndy) + Pi(),\n            _ndy < 0,\n            Atan(_dx / _ndy) - Pi(),\n            _dx > 0,\n            Pi() / 2,\n            -Pi() / 2\n            ) + 2 * Pi(),\n            2 * Pi()\n            )\n            },\n            Coalesce(\n            LookUp(\n            varSlices,\n            If(\n            NormStart < NormEnd,\n            _angle >= NormStart And _angle < NormEnd,\n            _angle >= NormStart Or  _angle < NormEnd\n            )\n            ).Order,\n            -1\n            )\n            ),\n            -1\n            )\n            )\n            )\n            }\n            )\n        },\n\n        With(\n          { _valid: CountIf(_hits, wedge <> -1) },\n          If(\n            _valid = 0,\n            { Ni: _i, Mj: _j, SliceOrder: Blank() },\n            With(\n            {\n            _best: First(\n            Sort(\n            AddColumns(\n            varSlices,\n            _cnt,\n            CountIf(_hits, wedge = Order)\n            ),\n            _cnt,\n            SortOrder.Descending\n            )\n            )\n            },\n            {\n            Ni: _i,\n            Mj: _j,\n            SliceOrder:\n            If(\n            _best._cnt / _valid >= threshold,\n            _best.Order,\n            Blank()\n            )\n            }\n            )\n          )\n        )\n      )\n    )\n  )\n)"
-      SelectedKey: =varHoveredKey
-      SelectedSlice: =LookUp(cmpPieChart.Items, Key = varHoveredKey)
-      SliceCount: =CountRows(cmpPieChart.Items)
+      OnReset: |-
+        =// only show reset button for dev work
+        Set(debugResetVisible,true);
+
+        // ====
+        // SECTION 0: SELECTION STATE
+        // ====
+        // Keep the current selected Key when recalculating.
+        // If SelectedKey is set externally, apply it.
+        If(
+          Coalesce(Self.SelectedKey, "") <> "",
+          Set(varHoveredKey, Self.SelectedKey),
+          Set(varHoveredKey, Coalesce(varHoveredKey, ""))
+        );
+
+        // ====
+        // SECTION 1: PADDING AND TEXT HEIGHTS
+        // ====
+        // Cache padding values and compute heights for title and caption
+        // so the chart area can be reduced to prevent overlap.
+
+        Set(varPadT, Coalesce(Self.PaddingTop, 6));
+        Set(varPadB, Coalesce(Self.PaddingBottom, 6));
+        Set(varPadL, Coalesce(Self.PaddingLeft, 6));
+        Set(varPadR, Coalesce(Self.PaddingRight, 6));
+        Set(varTitleH,   If(IsBlank(Self.ChartTitle), 0, 24));
+        Set(varCaptionH, If(IsBlank(Self.Caption), 0, 30));
+
+        // ====
+        // SECTION 2: CHART GEOMETRY
+        // ====
+        // The usable area is the component minus padding, title, and caption. (no legend)
+        // ChartSize is the largest square that fits.
+
+        With(
+          {
+            _usableW: Self.Width  - varPadL - varPadR,
+            _usableH: Self.Height - varPadT - varPadB - varTitleH - varCaptionH
+          },
+
+          Set(ChartSize,    Min(_usableW, _usableH));
+          Set(ChartCenterX, varPadL + ChartSize / 2);
+          Set(ChartCenterY, varPadT + varTitleH + ChartSize / 2)
+        );
+
+        Set(PieRadius, ChartSize / 2);
+
+        // ====
+        // SECTION 3: GRID PARAMETERS FOR BUTTON HIT LAYER
+        // ====
+        Set(gridN,      Min(15, Max(10, RoundDown(ChartSize / 20, 0))));
+        Set(gridM,      gridN);
+        Set(sampleSize, 7);
+        Set(threshold,  0.4);
+
+        // ====
+        // SECTION 4: INPUT NORMALIZATION (Key/Value) + WEDGE MATH SCALARS
+        // ====
+        Set(
+          varItemsNormalized,
+          ForAll(
+            Sequence(CountRows(Self.Items)) As row,
+            With(
+              { _item: Index(Self.Items, row.Value) },
+              {
+                RowNumber: row.Value,
+                Order: Coalesce(_item.Order, row.Value),
+                Key: Coalesce(Text(_item.Key), Text(_item.X), Text(row.Value)),
+                Value: Coalesce(_item.Value, Coalesce(_item.Y, 0)),
+                Label: Coalesce(Text(_item.Label), Text(_item.Key), Text(_item.X), ""),
+                Color: Coalesce(_item.Color, ""),
+                Explode: Coalesce(_item.Explode, false)
+              }
+            )
+          )
+        );
+
+        Set(
+          varItemsSorted,
+          If(
+            Coalesce(Self.SortByValue, false),
+            SortByColumns(
+              varItemsNormalized,
+              "Value", SortOrder.Descending,
+              "Order", SortOrder.Ascending
+            ),
+            SortByColumns(
+              varItemsNormalized,
+              "Order", SortOrder.Ascending
+            )
+          )
+        );
+
+        Set(WedgeTotal,    Sum(varItemsSorted, Coalesce(Value, 0)));
+        If(WedgeTotal = 0, Set(WedgeTotal,1)); // avoid divide by 0 error later on
+        Set(WedgeStartRad, Coalesce(Self.StartRotation, 0) * Pi() / 180);
+        Set(ArcScale,      Coalesce(Self.EndRotation, 360) / 360);
+
+        // ====
+        // SECTION 5: SVG RADIUS WITH EXPLODE MARGIN + DONUT SETTINGS
+        // ====
+        // Reduce the SVG-space pie radius so that exploded slices
+        // stay within the 0-100 viewBox and are not cropped.
+
+        Set(varSvgR,    Max(10, 48 - Coalesce(Self.ExplodeDistance, 5)));
+        Set(varSvgRTxt, Max(10, 30 - Coalesce(Self.ExplodeDistance, 5)));
+        Set(varDonutPct, Max(0, Min(100, Coalesce(Self.DonutHolePercent, 0))));
+        Set(varHoleR, varSvgR * varDonutPct / 100);
+        Set(varHoleStartAngle, WedgeStartRad);
+        Set(varHoleEndAngle, WedgeStartRad + 2 * Pi() * ArcScale);
+
+        // ====
+        // SECTION 6: BUILD varSlices
+        // ====
+        Set(palCount, CountRows(Self.Palette));
+        Set(
+            varSlices,
+            ForAll(
+              varItemsSorted As SortedRec,
+              With(
+                {
+                  _cumSum:
+                    Coalesce(
+                      Sum(
+                        Filter(varItemsSorted As SliceRecord, SliceRecord.Order < SortedRec.Order),
+                        Coalesce(ThisRecord.Value, 0)
+                      ),
+                      0
+                    )
+                },
+                With(
+                  {
+                    _value:      SortedRec.Value,
+                    _valText:    Text(SortedRec.Value),
+                    _explode:    SortedRec.Explode,
+                    _explodeDist: Coalesce(Self.ExplodeDistance, 5),
+                    _startAngle: WedgeStartRad
+                    + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))
+                    * 2 * Pi() * ArcScale,
+                    _color:
+                    Coalesce(
+                    If(SortedRec.Color <> "", SortedRec.Color, Blank()),
+                    Index(
+                    Self.Palette,
+                    Mod(SortedRec.Order - 1,
+                    If(palCount = 0, 1, palCount)) + 1
+                    ).Value,
+                    "#D1D5DB"
+                    )
+                  },
+                  With(
+                    {
+                    _sliceArc: (_value / If(WedgeTotal = 0, 1, WedgeTotal))
+                    * 2 * Pi() * ArcScale,
+                    _endAngle: WedgeStartRad
+                    + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))
+                    * 2 * Pi() * ArcScale
+                    + (_value / If(WedgeTotal = 0, 1, WedgeTotal))
+                    * 2 * Pi() * ArcScale
+                    },
+                    With(
+                    {
+                    _midAngle: WedgeStartRad
+                    + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))
+                    * 2 * Pi() * ArcScale
+                    + (_value / If(WedgeTotal = 0, 1, WedgeTotal))
+                    * Pi() * ArcScale
+                    },
+                    With(
+                    {
+                    _offsetX: If(_explode,  _explodeDist * Sin(_midAngle), 0),
+                    _offsetY: If(_explode, -(_explodeDist * Cos(_midAngle)), 0)
+                    },
+                    With(
+                    {
+                    _tooltip: _valText & " (" & Text(If(WedgeTotal > 0, _value / WedgeTotal, 0), Coalesce(Self.PercentFormat, "[$-en-US]0.0%")) & ")"
+                    },
+                    With(
+                    {
+                    _label: Coalesce(SortedRec.Label, SortedRec.Key & " " & _tooltip)
+                    },
+                    {
+                    Order:      SortedRec.Order,
+                    Key:        SortedRec.Key,
+                    Label:      _label,
+                    Value:      _value,
+                    RGBColor:   _color,
+                    Explode:    _explode,
+                    Color:      ColorValue(_color),
+                    StartAngle: _startAngle,
+                    EndAngle:   _endAngle,
+                    MidAngle:   _midAngle,
+                    NormStart:  Mod(_startAngle, 2 * Pi()),
+                    NormEnd:    Mod(_endAngle,   2 * Pi()),
+                    OffsetX:    _offsetX,
+                    OffsetY:    _offsetY,
+                    X1: Text(50 + varSvgR * Sin(_startAngle), "[$-en-US]0.0000"),
+                    Y1: Text(50 - varSvgR * Cos(_startAngle), "[$-en-US]0.0000"),
+                    X2: Text(50 + varSvgR * Sin(_endAngle),   "[$-en-US]0.0000"),
+                    Y2: Text(50 - varSvgR * Cos(_endAngle),   "[$-en-US]0.0000"),
+                    MidX: Text(50 + varSvgRTxt * Sin(_midAngle) + _offsetX, "[$-en-US]0.0000"),
+                    MidY: Text(50 - varSvgRTxt * Cos(_midAngle) + _offsetY, "[$-en-US]0.0000"),
+                    LabelX: Text(50 + (varSvgR * 0.65) * Sin(_midAngle) + _offsetX, "[$-en-US]0.0000"),
+                    LabelY: Text(50 - (varSvgR * 0.65) * Cos(_midAngle) + _offsetY, "[$-en-US]0.0000"),
+                    tooltip: SortedRec.Key & ": " & _tooltip
+                    }
+                    )
+                    )
+                    )
+                  )
+                  )
+                )
+              )
+            )
+        );
+
+        // ====
+        // SECTION 7: BUILD varSVG
+        // ====
+        Set(
+          varSVG,
+          If(
+            Or(WedgeTotal <= 0, IsEmpty(varSlices)),
+            // Empty state SVG (unchanged)
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>" &
+            "<circle cx='50' cy='50' r='48' fill='#F3F4F6' stroke='#E5E7EB' stroke-width='1'/>" &
+            "<path d='M 50 50 L 50 2 A 48 48 0 0 1 91.6 26 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<path d='M 50 50 L 91.6 26 A 48 48 0 0 1 91.6 74 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<path d='M 50 50 L 91.6 74 A 48 48 0 0 1 50 98 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<path d='M 50 50 L 50 98 A 48 48 0 0 1 8.4 74 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<path d='M 50 50 L 8.4 74 A 48 48 0 0 1 8.4 26 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<path d='M 50 50 L 8.4 26 A 48 48 0 0 1 50 2 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            If(
+              varHoleR > 0,
+              "<circle cx='50' cy='50' r='" & Text(varHoleR, "[$-en-US]0.0###") & "' fill='" & Coalesce(Self.ChartFill, "#FAFAFA") & "'/>",
+              ""
+            ) &
+            "</svg>",
+
+            // Data SVG with wedges and optional labels
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>" &
+
+            // Draw all wedge paths
+            Concat(
+              varSlices,
+              "<path transform='translate(" &
+              Text(OffsetX, "[$-en-US]0.0000") & "," &
+              Text(OffsetY, "[$-en-US]0.0000") &
+              ")' d='M 50 50 L " &
+              X1 & " " & Y1 &
+              " A " & Text(varSvgR, "[$-en-US]0.0###") & " " & Text(varSvgR, "[$-en-US]0.0###") & " 0 " &
+              If((EndAngle - StartAngle) > Pi(), "1", "0") &
+              " 1 " &
+              X2 & " " & Y2 &
+              " Z' fill='" & RGBColor &
+              "' stroke='" & Coalesce(Self.StrokeColor, "white") &
+              "' stroke-width='" &
+              Text(Coalesce(Self.StrokeWidth, 1), "[$-en-US]0.0#") &
+              "'/>"
+            ) &
+
+            // Draw wedge labels (if enabled and wedge is large enough)
+            If(
+              Coalesce(Self.ShowWedgeLabel, false),
+              Concat(
+                varSlices,
+                If(
+                  (EndAngle - StartAngle) >= (Max(0, Coalesce(Self.MinLabelAngle, 10)) * Pi() / 180),
+                  "<text x='" & LabelX &
+                  "' y='" & LabelY &
+                  "' text-anchor='middle' dominant-baseline='middle' fill='white' font-size='5' font-family='Segoe UI' font-weight='600'>" &
+                  Label &
+                  "</text>",
+                  ""
+                )
+              ),
+              ""
+            ) &
+
+            // Draw donut hole overlay using ChartFill color (supports full and partial arcs)
+            If(
+              varHoleR > 0,
+              If(
+                ArcScale >= 1,
+                "<circle cx='50' cy='50' r='" & Text(varHoleR, "[$-en-US]0.0###") & "' fill='" & Coalesce(Self.ChartFill, "#FAFAFA") & "'/>",
+                "<path d='M 50 50 L " &
+                Text(50 + varHoleR * Sin(varHoleStartAngle), "[$-en-US]0.0000") & " " &
+                Text(50 - varHoleR * Cos(varHoleStartAngle), "[$-en-US]0.0000") &
+                " A " & Text(varHoleR, "[$-en-US]0.0###") & " " & Text(varHoleR, "[$-en-US]0.0###") & " 0 " &
+                If((varHoleEndAngle - varHoleStartAngle) > Pi(), "1", "0") & " 1 " &
+                Text(50 + varHoleR * Sin(varHoleEndAngle), "[$-en-US]0.0000") & " " &
+                Text(50 - varHoleR * Cos(varHoleEndAngle), "[$-en-US]0.0000") &
+                " Z' fill='" & Coalesce(Self.ChartFill, "#FAFAFA") & "'/>"
+              ),
+              ""
+            ) &
+
+            "</svg>"
+          )
+        );
+
+        // make sure it matches an actual key, otherwise ignore it
+        If(IsBlank(LookUp(Self.Items, Key=varHoveredKey || X=varHoveredKey)),Set(varHoveredKey,""));
+
+        // ====
+        // SECTION 8: BUILD varButtonSlices
+        // ====
+        Set(btnW,   2 * PieRadius / gridM);
+        Set(btnH,   2 * PieRadius / gridN);
+        Set(gridOX, ChartCenterX - PieRadius);
+        Set(gridOY, ChartCenterY - PieRadius);
+        // adjust to match pie if shrunk some for exploded pieces
+        Set(PieRadiusAdjusted, PieRadius * varSvgR/50);
+        Set(r2,     PieRadiusAdjusted * PieRadiusAdjusted);
+
+        Set(
+          varButtonSlices,
+          ForAll(
+            Sequence(gridN * gridM) As cell,
+
+            With(
+              {
+                _i:    RoundDown((cell.Value - 1) / gridM, 0),
+                _j:    Mod(cell.Value - 1, gridM),
+                _xMin: gridOX + Mod(cell.Value - 1, gridM) * btnW,
+                _yMin: gridOY + RoundDown((cell.Value - 1) / gridM, 0) * btnH
+              },
+
+              // ====
+              // IMPLEMENTATION A: single center-point Atan2 per cell
+              // ====
+              // Uncomment this block and comment out Implementation B to use.
+              /*
+              With(
+                {
+                  _sx: _xMin + btnW / 2,
+                  _sy: _yMin + btnH / 2
+                },
+                With(
+                  {
+                    _dx:  _sx - ChartCenterX,
+                    _ndy: ChartCenterY - _sy,
+                    _d2:  Power(_sx - ChartCenterX, 2) + Power(ChartCenterY - _sy, 2)
+                  },
+                  If(
+                    _d2 <= r2 And _d2 > 0,
+                    With(
+                    {
+                    _angle: Mod(
+                    If(
+                    _ndy > 0,       Atan(_dx / _ndy),
+                    _ndy < 0 And _dx >= 0, Atan(_dx / _ndy) + Pi(),
+                    _ndy < 0,       Atan(_dx / _ndy) - Pi(),
+                    _dx > 0,        Pi() / 2,
+                    -Pi() / 2
+                    ) + 2 * Pi(),
+                    2 * Pi()
+                    )
+                    },
+                    {
+                    Ni: _i,
+                    Mj: _j,
+                    SliceOrder:
+                    Coalesce(
+                    LookUp(
+                    varSlices,
+                    If(
+                    NormStart < NormEnd,
+                    _angle >= NormStart And _angle < NormEnd,
+                    _angle >= NormStart Or  _angle < NormEnd
+                    )
+                    ).Order,
+                    Blank()
+                    )
+                    }
+                    ),
+                    { Ni: _i, Mj: _j, SliceOrder: Blank() }
+                  )
+                )
+              )
+              */
+
+              // ====
+              // IMPLEMENTATION B: sub-sample majority vote  [ACTIVE]
+              // ====
+              With(
+                {
+                  _hits:
+                    ForAll(
+                    Sequence(sampleSize * sampleSize) As s,
+                    {
+                    wedge:
+                    With(
+                    {
+                    _sx: _xMin
+                    + (RoundDown((s.Value - 1) / sampleSize, 0) + 0.5)
+                    * btnW / sampleSize,
+                    _sy: _yMin
+                    + (Mod(s.Value - 1, sampleSize) + 0.5)
+                    * btnH / sampleSize
+                    },
+                    With(
+                    {
+                    _dx:  _sx - ChartCenterX,
+                    _ndy: ChartCenterY - _sy,
+                    _d2:  Power(_sx - ChartCenterX, 2)
+                    + Power(ChartCenterY - _sy, 2)
+                    },
+                    If(
+                    _d2 <= r2 And _d2 > 0,
+                    With(
+                    {
+                    _angle: Mod(
+                    If(
+                    _ndy > 0,
+                    Atan(_dx / _ndy),
+                    _ndy < 0 And _dx >= 0,
+                    Atan(_dx / _ndy) + Pi(),
+                    _ndy < 0,
+                    Atan(_dx / _ndy) - Pi(),
+                    _dx > 0,
+                    Pi() / 2,
+                    -Pi() / 2
+                    ) + 2 * Pi(),
+                    2 * Pi()
+                    )
+                    },
+                    Coalesce(
+                    LookUp(
+                    varSlices,
+                    If(
+                    NormStart < NormEnd,
+                    _angle >= NormStart And _angle < NormEnd,
+                    _angle >= NormStart Or  _angle < NormEnd
+                    )
+                    ).Order,
+                    -1
+                    )
+                    ),
+                    -1
+                    )
+                    )
+                    )
+                    }
+                    )
+                },
+
+                With(
+                  { _valid: CountIf(_hits, wedge <> -1) },
+                  If(
+                    _valid = 0,
+                    { Ni: _i, Mj: _j, SliceOrder: Blank() },
+                    With(
+                    {
+                    _best: First(
+                    Sort(
+                    AddColumns(
+                    varSlices,
+                    _cnt,
+                    CountIf(_hits, wedge = Order)
+                    ),
+                    _cnt,
+                    SortOrder.Descending
+                    )
+                    )
+                    },
+                    {
+                    Ni: _i,
+                    Mj: _j,
+                    SliceOrder:
+                    If(
+                    _best._cnt / _valid >= threshold,
+                    _best.Order,
+                    Blank()
+                    )
+                    }
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      SelectedSlice: =LookUp(varSlices, Key = varHoveredKey)
+      SliceCount: =CountRows(varItemsSorted)
       SvgMarkup: =varSVG
-      TotalValue: =Sum(cmpPieChart.Items, Coalesce(Value, 0))
+      TotalValue: =Sum(varItemsSorted, Coalesce(Value, 0))
       Width: =400
     Children:
       - cmpPieChart_conRoot:
@@ -292,9 +864,9 @@ ComponentDefinitions:
                         DropShadow: =Coalesce(cmpPieChart.ChartShadow, DropShadow.Semibold)
                         Fill: |-
                           =If(
-                            Coalesce(cmpPieChart.ChartBackgroundColor, "") = "",
+                            Coalesce(cmpPieChart.ChartFill, "") = "",
                             RGBA(0, 0, 0, 0),
-                            ColorValue(cmpPieChart.ChartBackgroundColor)
+                            ColorValue(cmpPieChart.ChartFill)
                           )
                         Height: |-
                           =varTitleH + ChartSize +
@@ -392,7 +964,7 @@ ComponentDefinitions:
                             cmpPieChart.CenterLabelText,
                             Text(WedgeTotal)
                           )
-                        Visible: =cmpPieChart.ShowCenterLabel And Not(cmpPieChart.IsEmpty)
+                        Visible: =cmpPieChart.ShowCenterLabel And Not(cmpPieChart.IsItemsEmpty)
                         Width: =PieRadiusAdjusted*2
                         X: =ChartCenterX - PieRadiusAdjusted
                         Y: =ChartCenterY - 16
@@ -454,9 +1026,7 @@ ComponentDefinitions:
                         PaddingTop: =0
                         Size: =12
                         Text: =Coalesce(cmpPieChart.EmptyStateText, "No data")
-                        Visible: |-
-                          =IsEmpty(cmpPieChart.Items) Or
-                          Sum(cmpPieChart.Items, Coalesce(Value, 0)) = 0
+                        Visible: =cmpPieChart.IsItemsEmpty
                         Width: =ChartSize
                         X: =cmpPieChart_imgChart.X
                         Y: =cmpPieChart_imgChart.Y
@@ -474,7 +1044,7 @@ ComponentDefinitions:
                           =Coalesce(cmpPieChart.AccessibleLabel, "Pie chart") &
                           ". " &
                           Concat(
-                            Sort(cmpPieChart.Items, Coalesce(Order, 0)),
+                            SortByColumns(varItemsSorted, "Order", SortOrder.Ascending),
                             Coalesce(Label, Key, "?") & ": " & Text(Coalesce(Value, 0)) & ", "
                           )
                         Visible: =false
@@ -616,3 +1186,12 @@ ComponentDefinitions:
             Text: ="" //Text(Time(0, 0, Self.Value/1000), "hh:mm:ss")
             Visible: =false
             Width: =1
+      - btnReset_cmpPieChart:
+          Control: Button@0.0.45
+          Properties:
+            Height: =If(Self.Visible, 22, 1)
+            OnSelect: =Reset(Parent)
+            Visible: =debugResetVisible // || true
+            Width: =If(Self.Visible,50,1)
+            X: =10
+            Y: =10

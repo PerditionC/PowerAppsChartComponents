@@ -6,72 +6,84 @@ ComponentDefinitions:
         PropertyKind: Input
         DisplayName: Accessible Label
         Description: Screen reader label for the chart
+        RaiseOnReset: true
         DataType: Text
         Default: ="Bar chart"
       Caption:
         PropertyKind: Input
         DisplayName: Caption
         Description: Optional text displayed below the chart; leave blank to hide
+        RaiseOnReset: true
         DataType: Text
         Default: =""
       CaptionColor:
         PropertyKind: Input
         DisplayName: Caption Color
         Description: CSS color for the caption text
+        RaiseOnReset: true
         DataType: Text
         Default: ="black"
       CategoryAxisTitle:
         PropertyKind: Input
         DisplayName: Category Axis Title
         Description: Optional title for the category axis
+        RaiseOnReset: true
         DataType: Text
         Default: =""
       CategoryLabelAngle:
         PropertyKind: Input
         DisplayName: Category Label Angle
-        Description: Rotation angle for category labels (0, 45, or 90 degrees)
+        Description: Rotation angle for category labels in degrees (0, 45, or 90)
+        RaiseOnReset: true
         DataType: Number
         Default: =0
       ChartBackgroundColor:
         PropertyKind: Input
         DisplayName: Chart Background Color
         Description: Fill color for the container behind the chart
+        RaiseOnReset: true
         DataType: Text
         Default: ="#FAFAFA"
       ChartBorderColor:
         PropertyKind: Input
         DisplayName: Chart Border Color
-        Description: Border color when ChartShadow is None
+        Description: Border color when ChartShadow is DropShadow.None
+        RaiseOnReset: true
         DataType: Text
         Default: ="#E0E0E0"
       ChartMode:
         PropertyKind: Input
         DisplayName: Chart Mode
-        Description: Layout mode for bars. "Simple" = one bar per category, "Grouped" = bars side by side per category, "Stacked" = bars stacked per category, "Stacked100" = stacked normalized to 100 percent.
+        Description: Layout mode for bars. "Simple" = one bar per category (first bar series only). "Grouped" = bars side by side per category. "Stacked" = bars stacked per category. "Stacked100" = stacked normalized to 100 percent.
+        RaiseOnReset: true
         DataType: Text
         Default: ="Grouped"
       ChartShadow:
         PropertyKind: Input
         DisplayName: Chart Shadow
-        Description: Visual effect for chart container - shadow, border, or none
+        Description: Drop shadow style for the chart container (DropShadow enum)
+        RaiseOnReset: true
         DataType: Text
         Default: =DropShadow.Semibold
       ChartTitle:
         PropertyKind: Input
         DisplayName: Chart Title
         Description: Text displayed as the chart heading
+        RaiseOnReset: true
         DataType: Text
-        Default: ="Bar Chart Title"
+        Default: ="Bar Chart"
       EmptyStateText:
         PropertyKind: Input
         DisplayName: Empty State Text
-        Description: Message shown when Items is empty or total is zero
+        Description: Message shown when Items is empty or all values are zero
+        RaiseOnReset: true
         DataType: Text
         Default: ="No data"
       GroupGapRatio:
         PropertyKind: Input
         DisplayName: Group Gap Ratio
-        Description: Ratio of gap width to group width between category groups (0 to 0.8). Larger values give more space between groups.
+        Description: Fraction of each category slot used as a gap between groups (0.05 to 0.8). Larger values give more breathing room between category groups.
+        RaiseOnReset: true
         DataType: Number
         Default: =0.25
       HasSelection:
@@ -79,6 +91,48 @@ ComponentDefinitions:
         DisplayName: Has Selection
         Description: True when a bar segment is currently selected
         DataType: Boolean
+      HitButtonBorderColor:
+        PropertyKind: Input
+        DisplayName: Hit Button Border Color
+        Description: Border color for the invisible hit-test buttons in the interactive overlay. Default is transparent.
+        RaiseOnReset: true
+        DataType: Text
+        Default: =""
+      HitButtonBorderStyle:
+        PropertyKind: Input
+        DisplayName: Hit Button Border Style
+        Description: Border style for the hit-test buttons. "None", "Solid", "Dashed", "Dotted".
+        RaiseOnReset: true
+        DataType: Text
+        Default: =BorderStyle.None
+      HitButtonBorderWidth:
+        PropertyKind: Input
+        DisplayName: Hit Button Border Width
+        Description: Border thickness in pixels for the hit-test buttons. 0 = none.
+        RaiseOnReset: true
+        DataType: Number
+        Default: =0
+      InteractiveBorderColor:
+        PropertyKind: Input
+        DisplayName: Interactive Border Color
+        Description: Border color for the interactive overlay container. Default is transparent.
+        RaiseOnReset: true
+        DataType: Text
+        Default: =""
+      InteractiveBorderStyle:
+        PropertyKind: Input
+        DisplayName: Interactive Border Style
+        Description: Border style for the interactive overlay container. "None", "Solid", "Dashed", "Dotted".
+        RaiseOnReset: true
+        DataType: Text
+        Default: =BorderStyle.None
+      InteractiveBorderWidth:
+        PropertyKind: Input
+        DisplayName: Interactive Border Width
+        Description: Border thickness in pixels for the interactive overlay container. 0 = none.
+        RaiseOnReset: true
+        DataType: Number
+        Default: =0
       IsEmpty:
         PropertyKind: Output
         DisplayName: Is Empty
@@ -86,92 +140,110 @@ ComponentDefinitions:
         DataType: Boolean
       IsPrinting:
         PropertyKind: Input
-        DisplayName: IsPrinting
-        Description: Set to true (e.g. Screen.Printing) to hide interactive overlays for PDF export
+        DisplayName: Is Printing
+        Description: Set to Screen.Printing to hide interactive overlays for PDF export
+        RaiseOnReset: true
         DataType: Boolean
         Default: =false
       Items:
         PropertyKind: Input
         DisplayName: Items
-        Description: 'Data table. Required columns: Order (Number), Category (Text), Series (Text), Value (Number). Optional columns: Color (Text CSS hex), DrawAs (Text: Bar or Line), MarkerType (Text: None, Circle, FilledCircle, Diamond, Triangle).'
+        Description: >-
+          Data table. Supported columns:
+
+          Category or X  (Text)   -- category axis label. Both names accepted; Category takes priority. Value    or Y  (Number) -- numeric value. Both names accepted; Value takes priority. Series         (Text)   -- series name. Defaults to "Series 1" when omitted. Order          (Number) -- sort order for categories and series. Optional. Color          (Text)   -- CSS hex color override for this series. Optional. DrawAs         (Text)   -- "Bar" (default) or "Line". Optional. MarkerType     (Text)   -- "None","Circle","FilledCircle","Diamond","Triangle". Optional.
+
+          Key is NOT a valid input column; it is always derived as Category & "|" & Series.
+
+          Include both X/Category and Y/Value columns in the table schema (superset pattern) so Coalesce references never fail on missing fields.
+
+          Limit: top 20 categories and top 12 series by Order are used; extras are dropped.
         RaiseOnReset: true
         DataType: Table
         Default: |-
           =Table(
-            { Order: 1, Category: "Q1", Series: "Product A", Value: 45, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 2, Category: "Q1", Series: "Product B", Value: 32, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 3, Category: "Q1", Series: "Product C", Value: 18, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 4, Category: "Q1", Series: "Trend", Value: 38, Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" },
-            { Order: 5, Category: "Q2", Series: "Product A", Value: 72, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 6, Category: "Q2", Series: "Product B", Value: 58, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 7, Category: "Q2", Series: "Product C", Value: 29, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 8, Category: "Q2", Series: "Trend", Value: 65, Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" },
-            { Order: 9, Category: "Q3", Series: "Product A", Value: 58, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 10, Category: "Q3", Series: "Product B", Value: 41, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 11, Category: "Q3", Series: "Product C", Value: 35, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 12, Category: "Q3", Series: "Trend", Value: 50, Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" },
-            { Order: 13, Category: "Q4", Series: "Product A", Value: 91, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 14, Category: "Q4", Series: "Product B", Value: 67, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 15, Category: "Q4", Series: "Product C", Value: 44, Color: "", DrawAs: "Bar", MarkerType: "" },
-            { Order: 16, Category: "Q4", Series: "Trend", Value: 80, Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" }
+            { Order: 1,  X: "Q1", Category: "Q1", Y: 45, Value: 45, Series: "Product A", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 2,  X: "Q1", Category: "Q1", Y: 32, Value: 32, Series: "Product B", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 3,  X: "Q1", Category: "Q1", Y: 18, Value: 18, Series: "Product C", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 4,  X: "Q1", Category: "Q1", Y: 38, Value: 38, Series: "Trend",     Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" },
+            { Order: 5,  X: "Q2", Category: "Q2", Y: 72, Value: 72, Series: "Product A", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 6,  X: "Q2", Category: "Q2", Y: 58, Value: 58, Series: "Product B", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 7,  X: "Q2", Category: "Q2", Y: 29, Value: 29, Series: "Product C", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 8,  X: "Q2", Category: "Q2", Y: 65, Value: 65, Series: "Trend",     Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" },
+            { Order: 9,  X: "Q3", Category: "Q3", Y: 58, Value: 58, Series: "Product A", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 10, X: "Q3", Category: "Q3", Y: 41, Value: 41, Series: "Product B", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 11, X: "Q3", Category: "Q3", Y: 35, Value: 35, Series: "Product C", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 12, X: "Q3", Category: "Q3", Y: 50, Value: 50, Series: "Trend",     Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" },
+            { Order: 13, X: "Q4", Category: "Q4", Y: 91, Value: 91, Series: "Product A", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 14, X: "Q4", Category: "Q4", Y: 67, Value: 67, Series: "Product B", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 15, X: "Q4", Category: "Q4", Y: 44, Value: 44, Series: "Product C", Color: "", DrawAs: "Bar",  MarkerType: "" },
+            { Order: 16, X: "Q4", Category: "Q4", Y: 80, Value: 80, Series: "Trend",     Color: "#EF4444", DrawAs: "Line", MarkerType: "FilledCircle" }
           )
       LegendData:
         PropertyKind: Output
         DisplayName: Legend Data
-        Description: 'Table of legend records for external legend component. Fields: SerIdx (Number), SerName (Text), SerColor (Text), DrawAs (Text), IsSelected (Boolean).'
+        Description: 'Table for an external legend component. Fields: SerIdx, SerName, SerColor, DrawAs, IsSelected.'
         DataType: Table
       MajorTickInterval:
         PropertyKind: Input
         DisplayName: Major Tick Interval
-        Description: Interval between major tick marks on the value axis. Leave blank for auto.
+        Description: Interval between major tick marks on the value axis. 0 = auto.
+        RaiseOnReset: true
         DataType: Number
         Default: =0
       MinorTickInterval:
         PropertyKind: Input
         DisplayName: Minor Tick Interval
-        Description: Interval between minor tick marks on the value axis. Leave blank for auto.
+        Description: Interval between minor tick marks on the value axis. 0 = auto.
+        RaiseOnReset: true
         DataType: Number
         Default: =0
       OnBarSelect:
         PropertyKind: Event
         DisplayName: On Bar Select
-        Description: Fires when a bar segment or line point is selected
+        Description: Fires when a bar segment or line point is tapped/clicked
         ReturnType: None
         Default: =
       Orientation:
         PropertyKind: Input
         DisplayName: Orientation
-        Description: '"Vertical" for vertical bars (categories on X axis), "Horizontal" for horizontal bars (categories on Y axis).'
+        Description: '"Vertical" = categories on X axis. "Horizontal" = categories on Y axis.'
+        RaiseOnReset: true
         DataType: Text
         Default: ="Vertical"
       PaddingBottom:
         PropertyKind: Input
         DisplayName: Padding Bottom
         Description: Space between bottom component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =6
       PaddingLeft:
         PropertyKind: Input
         DisplayName: Padding Left
         Description: Space between left component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =6
       PaddingRight:
         PropertyKind: Input
         DisplayName: Padding Right
         Description: Space between right component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =6
       PaddingTop:
         PropertyKind: Input
         DisplayName: Padding Top
         Description: Space between top component edge and content
+        RaiseOnReset: true
         DataType: Number
         Default: =6
       Palette:
         PropertyKind: Input
         DisplayName: Palette
-        Description: Table of color strings assigned to series when no Color value is specified
+        Description: Table of CSS hex color strings cycled when a series has no Color value
+        RaiseOnReset: true
         DataType: Table
         Default: |-
           =Table(
@@ -187,71 +259,76 @@ ComponentDefinitions:
       SelectedBarKey:
         PropertyKind: Input
         DisplayName: Selected Bar Key
-        Description: Set this to a segment key (Category|Series) to select it externally (e.g. from a legend). Works alongside internal button selection.
+        Description: Set externally (e.g. from a legend) to select a segment by its Key (Category & "|" & Series). Synced into varSelectedKey on reset.
         RaiseOnReset: true
         DataType: Text
         Default: =""
       SelectedCategory:
         PropertyKind: Output
         DisplayName: Selected Category
-        Description: The Category of the currently selected segment
+        Description: Category of the currently selected segment
         DataType: Text
       SelectedKey:
         PropertyKind: Output
         DisplayName: Selected Key
-        Description: The composite key (Category|Series) of the currently selected segment
+        Description: Composite key (Category & "|" & Series) of the selected segment
         DataType: Text
       SelectedSegment:
         PropertyKind: Output
         DisplayName: Selected Segment
-        Description: Full record of the currently selected segment from Items
+        Description: Full normalized record of the currently selected segment
         DataType: Record
       SelectedSeries:
         PropertyKind: Output
         DisplayName: Selected Series
-        Description: The Series name of the currently selected segment
+        Description: Series name of the currently selected segment
         DataType: Text
       ShowGridLines:
         PropertyKind: Input
         DisplayName: Show Grid Lines
         Description: Display grid lines across the plot area at major tick values
+        RaiseOnReset: true
         DataType: Boolean
         Default: =true
       ShowValueLabels:
         PropertyKind: Input
         DisplayName: Show Value Labels
         Description: Display the numeric value on or above each bar segment
+        RaiseOnReset: true
         DataType: Boolean
         Default: =false
       SvgMarkup:
         PropertyKind: Output
         DisplayName: SVG Markup
-        Description: The raw SVG string used to render the chart (export-ready)
+        Description: Raw SVG string used to render the chart (export-ready)
         DataType: Text
       ValueAxisMax:
         PropertyKind: Input
         DisplayName: Value Axis Max
-        Description: Maximum value on the value axis. Leave blank (0) for auto.
+        Description: Maximum value on the value axis. 0 = auto.
+        RaiseOnReset: true
         DataType: Number
         Default: =0
       ValueAxisMin:
         PropertyKind: Input
         DisplayName: Value Axis Min
-        Description: Minimum value on the value axis. Leave blank (0) for auto.
+        Description: Minimum value on the value axis. 0 = auto (uses data min, floored at 0).
+        RaiseOnReset: true
         DataType: Number
         Default: =0
       ValueAxisTitle:
         PropertyKind: Input
         DisplayName: Value Axis Title
         Description: Optional title for the value axis
+        RaiseOnReset: true
         DataType: Text
         Default: =""
     Properties:
       HasSelection: =varSelectedKey <> ""
       Height: =500
       IsEmpty: |-
-        =IsEmpty(cmpBarChart.Items) Or
-        Sum(cmpBarChart.Items, Coalesce(Value, 0)) = 0
+        =IsEmpty(varItemsNorm) Or
+        Sum(varItemsNorm, Coalesce(Value, 0)) = 0
       LegendData: |-
         =AddColumns(
           varSeriesList,
@@ -259,139 +336,164 @@ ComponentDefinitions:
             SerName = LookUp(varBarSegments, SegKey = varSelectedKey).Series
         )
       OnReset: |-
-        =// ====
-        // SECTION 0: EXTERNAL SELECTION SYNC
-        // ====
+        =// Dev helper -- set false before shipping
         Set(debugResetVisible, true);
 
+        // ====
+        // SECTION 0: EXTERNAL SELECTION SYNC
+        // ====
+        // If SelectedBarKey is provided externally, apply it.
+        // Otherwise keep whatever varSelectedKey already holds.
         If(
-          Coalesce(Self.SelectedBarKey, "") <> "",
-          Set(varSelectedKey, Self.SelectedBarKey)
+          Coalesce(cmpBarChart.SelectedBarKey, "") <> "",
+          Set(varSelectedKey, cmpBarChart.SelectedBarKey)
         );
 
         // ====
         // SECTION 1: PADDING AND TEXT HEIGHTS
         // ====
-        Set(varPadT, Coalesce(Self.PaddingTop, 6));
-        Set(varPadB, Coalesce(Self.PaddingBottom, 6));
-        Set(varPadL, Coalesce(Self.PaddingLeft, 6));
-        Set(varPadR, Coalesce(Self.PaddingRight, 6));
-        Set(varTitleH, If(IsBlank(Self.ChartTitle), 0, 24));
-        Set(varCaptionH, If(IsBlank(Self.Caption), 0, 30));
+        Set(varPadT,     Coalesce(cmpBarChart.PaddingTop,    6));
+        Set(varPadB,     Coalesce(cmpBarChart.PaddingBottom, 6));
+        Set(varPadL,     Coalesce(cmpBarChart.PaddingLeft,   6));
+        Set(varPadR,     Coalesce(cmpBarChart.PaddingRight,  6));
+        Set(varTitleH,   If(IsBlank(cmpBarChart.ChartTitle), 0, 24));
+        Set(varCaptionH, If(IsBlank(cmpBarChart.Caption),    0, 30));
+
+        // Pixel dimensions of the chart image control
+        Set(varChartW, cmpBarChart.Width  - varPadL - varPadR);
+        Set(varChartH, cmpBarChart.Height - varTitleH - varCaptionH - varPadT - varPadB);
 
         // ====
-        // SECTION 2: MODE, ORIENTATION, AND FLAGS
+        // SECTION 2: MODE, ORIENTATION, FLAGS
         // ====
-        Set(varMode, Coalesce(Self.ChartMode, "Grouped"));
-        Set(varIsHoriz, Lower(Coalesce(Self.Orientation, "Vertical")) = "horizontal");
-        Set(varLabelAngle, Coalesce(Self.CategoryLabelAngle, 0));
-        Set(varShowGrid, Coalesce(Self.ShowGridLines, true));
-        Set(varShowValues, Coalesce(Self.ShowValueLabels, false));
-
-        // Chart pixel dimensions (used for image control sizing)
-        Set(varChartW, Self.Width - varPadL - varPadR);
-        Set(varChartH, Self.Height - varPadT - varPadB - varTitleH - varCaptionH);
+        Set(varMode,       Coalesce(cmpBarChart.ChartMode,        "Grouped"));
+        Set(varIsHoriz,    Lower(Coalesce(cmpBarChart.Orientation, "Vertical")) = "horizontal");
+        Set(varLabelAngle, Coalesce(cmpBarChart.CategoryLabelAngle, 0));
+        Set(varShowGrid,   Coalesce(cmpBarChart.ShowGridLines,     true));
+        Set(varShowValues, Coalesce(cmpBarChart.ShowValueLabels,   false));
+        Set(palCount,      CountRows(cmpBarChart.Palette));
 
         // ====
-        // SECTION 3: EXTRACT CATEGORIES AND SERIES
+        // SECTION 3: INPUT NORMALIZATION
         // ====
-        Set(palCount, CountRows(Self.Palette));
+        // Normalize every row:
+        //   Category = Coalesce(Category, X, "?")
+        //   Value    = Coalesce(Value, Y, 0)
+        //   Series   = Coalesce(Series, "Series 1")
+        //   Order    = Coalesce(Order, 0)
+        //   Key      = Category & "|" & Series  (always derived, never from input)
+        //
+        // Limit: first 240 rows after sort (20 cats x 12 series max).
+        Set(
+          varItemsNorm,
+          ForAll(
+            FirstN(
+              SortByColumns(cmpBarChart.Items, "Order", SortOrder.Ascending),
+              240
+            ) As _r,
+            {
+              Order:      Coalesce(_r.Order, 0),
+              Category:   Coalesce(Text(_r.Category), Text(_r.X), "?"),
+              Value:      Coalesce(_r.Value, _r.Y, 0),
+              Series:     Coalesce(Text(_r.Series), "Series 1"),
+              Color:      Coalesce(Text(_r.Color),  ""),
+              DrawAs:     Lower(Coalesce(Text(_r.DrawAs), "bar")),
+              MarkerType: Coalesce(Text(_r.MarkerType), "None")
+            }
+          )
+        );
 
-        // Ordered category list derived from Items.Order
-        Set(varCategories,
-          With(
-            { _sorted: Sort(Self.Items, Order) },
+        // ====
+        // SECTION 4: CATEGORY AND SERIES LISTS
+        // ====
+        // Categories: unique, ordered by first appearance, capped at 20.
+        Set(
+          varCategories,
+          FirstN(
             ForAll(
-              Sequence(CountRows(Distinct(_sorted, Category))) As idx,
+              Sequence(CountRows(Distinct(varItemsNorm, Category))) As idx,
               {
-                CatIdx: idx.Value,
-                CatName: Last(FirstN(Distinct(_sorted, Category), idx.Value)).Value
+                CatIdx:  idx.Value,
+                CatName: Last(FirstN(Distinct(SortByColumns(varItemsNorm, "Order", SortOrder.Ascending), Category), idx.Value)).Value
               }
-            )
+            ),
+            20
           )
         );
         Set(varCatCount, CountRows(varCategories));
 
-        // Ordered series list with resolved colors and draw modes
-        Set(varSeriesList,
-          With(
-            { _sorted: Sort(Self.Items, Order) },
+        // Series: unique, ordered by first appearance, capped at 12.
+        // Color resolved: explicit item color > palette cycle > fallback gray.
+        Set(
+          varSeriesList,
+          FirstN(
             ForAll(
-              Sequence(CountRows(Distinct(_sorted, Series))) As idx,
+              Sequence(CountRows(Distinct(varItemsNorm, Series))) As idx,
               With(
-                { _serName: Last(FirstN(Distinct(_sorted, Series), idx.Value)).Value },
-                {
-                  SerIdx: idx.Value,
-                  SerName: _serName,
-                  SerColor: Coalesce(
-                    If(
-                      Coalesce(LookUp(Self.Items, Series = _serName).Color, "") <> "",
-                      LookUp(Self.Items, Series = _serName).Color,
-                      Blank()
-                    ),
-                    Index(
-                      Self.Palette,
-                      Mod(idx.Value - 1, If(palCount = 0, 1, palCount)) + 1
-                    ).Value,
-                    "#D1D5DB"
-                  ),
-                  SerDrawAs: Lower(Coalesce(LookUp(Self.Items, Series = _serName).DrawAs, "bar")),
-                  SerMarker: Coalesce(LookUp(Self.Items, Series = _serName).MarkerType, "None")
-                }
+                { _sn: Last(FirstN(Distinct(SortByColumns(varItemsNorm, "Order", SortOrder.Ascending), Series), idx.Value)).Value },
+                With(
+                  { _row: LookUp(varItemsNorm, Series = _sn) },
+                  {
+                    SerIdx:    idx.Value,
+                    SerName:   _sn,
+                    SerColor:  Coalesce(
+                                 If(Coalesce(_row.Color, "") <> "", _row.Color, Blank()),
+                                 Index(cmpBarChart.Palette, Mod(idx.Value - 1, If(palCount = 0, 1, palCount)) + 1).Value,
+                                 "#D1D5DB"
+                               ),
+                    SerDrawAs: Coalesce(_row.DrawAs,     "bar"),
+                    SerMarker: Coalesce(_row.MarkerType, "None")
+                  }
+                )
               )
-            )
+            ),
+            12
           )
         );
-        Set(varSerCount, CountRows(varSeriesList));
+        Set(varSerCount,    CountRows(varSeriesList));
         Set(varBarSerCount, CountIf(varSeriesList, SerDrawAs = "bar"));
 
         // ====
-        // SECTION 4: VALUE AXIS RANGE
+        // SECTION 5: VALUE AXIS RANGE AND TICK INTERVALS
         // ====
-        // Max category total for stacked modes
+        // Max stacked total across categories (for Stacked / Stacked100 modes)
         Set(varMaxCatTotal,
           Max(
             AddColumns(
               varCategories,
-              _catTotal,
+              _ct,
               Sum(
-                Filter(Self.Items,
+                Filter(varItemsNorm,
                   Category = CatName And
-                  Lower(Coalesce(LookUp(varSeriesList, SerName = Series).SerDrawAs, "bar")) = "bar"
+                  Coalesce(LookUp(varSeriesList, SerName = Series).SerDrawAs, "bar") = "bar"
                 ),
                 Coalesce(Value, 0)
               )
             ),
-            _catTotal
+            _ct
           )
         );
 
         Set(varYMin,
-          If(
-            varMode = "Stacked100", 0,
-            If(
-              Coalesce(Self.ValueAxisMin, 0) <> 0,
-              Self.ValueAxisMin,
-              Min(0, Min(Self.Items, Coalesce(Value, 0)))
+          If(varMode = "Stacked100", 0,
+            If(Coalesce(cmpBarChart.ValueAxisMin, 0) <> 0,
+              cmpBarChart.ValueAxisMin,
+              Min(0, Min(varItemsNorm, Coalesce(Value, 0)))
             )
           )
         );
 
         Set(varAutoMax,
-          If(
-            varMode = "Stacked100", 100,
-            If(
-              Or(varMode = "Stacked", varMode = "Stacked100"),
+          If(varMode = "Stacked100", 100,
+            If(Or(varMode = "Stacked", varMode = "Stacked100"),
               varMaxCatTotal,
-              Max(Self.Items, Coalesce(Value, 0))
+              Max(varItemsNorm, Coalesce(Value, 0))
             )
           )
         );
 
-        // Round up auto max to a nice number
         Set(varAutoMaxRounded,
-          If(
-            varAutoMax <= 0, 10,
+          If(varAutoMax <= 0, 10,
             With(
               { _mag: Power(10, RoundDown(Log(varAutoMax, 10), 0)) },
               RoundUp(varAutoMax / _mag, 1) * _mag
@@ -400,11 +502,9 @@ ComponentDefinitions:
         );
 
         Set(varYMax,
-          If(
-            varMode = "Stacked100", 100,
-            If(
-              Coalesce(Self.ValueAxisMax, 0) <> 0,
-              Self.ValueAxisMax,
+          If(varMode = "Stacked100", 100,
+            If(Coalesce(cmpBarChart.ValueAxisMax, 0) <> 0,
+              cmpBarChart.ValueAxisMax,
               varAutoMaxRounded
             )
           )
@@ -412,70 +512,101 @@ ComponentDefinitions:
 
         Set(varYRange, Max(varYMax - varYMin, 0.001));
 
-        // Tick intervals (auto if zero/blank)
         Set(varMajorTick,
-          If(
-            Coalesce(Self.MajorTickInterval, 0) > 0,
-            Self.MajorTickInterval,
+          If(Coalesce(cmpBarChart.MajorTickInterval, 0) > 0,
+            cmpBarChart.MajorTickInterval,
             varYRange / 5
           )
         );
         Set(varMinorTick,
-          If(
-            Coalesce(Self.MinorTickInterval, 0) > 0,
-            Self.MinorTickInterval,
+          If(Coalesce(cmpBarChart.MinorTickInterval, 0) > 0,
+            cmpBarChart.MinorTickInterval,
             varMajorTick / 2
           )
         );
 
+        // Cache safe divisor and tick count used by both grid and axis sections.
+        Set(varSafeMinorTick, Max(varMinorTick, 0.001));
+        Set(varTickCount,     RoundDown(varYRange / varSafeMinorTick, 0) + 1);
+
+        // Pre-build the shared tick row table (value + isMajor flag).
+        // Both the grid-line section and the value-axis section consume this table.
+        Set(
+          varTickRows,
+          ForAll(
+            Sequence(varTickCount) As tN,
+            {
+              _tv:     varYMin + (tN.Value - 1) * varMinorTick,
+              _isMaj:  Abs(Mod(Round((tN.Value - 1) * varMinorTick, 6), Round(varMajorTick, 6))) < 0.001
+                       Or (tN.Value - 1) * varMinorTick = 0
+            }
+          )
+        );
+
         // ====
-        // SECTION 5: SVG VIEWBOX AND PLOT AREA
+        // SECTION 6: SVG VIEWBOX AND PLOT RECTANGLE
         // ====
         Set(vbW, 1000);
-        Set(vbH, 700);
+        Set(vbH, RoundDown(1000 * varChartH / varChartW, 0));
 
-        // Margins in viewBox units -- accommodate labels and titles
-        Set(varMLeft, If(varIsHoriz, 130, 75));
-        Set(varMRight, 30);
-        Set(varMTop, 20);
-        Set(varMBottom, If(varIsHoriz, 50, If(varLabelAngle >= 90, 110, If(varLabelAngle >= 45, 90, 55))));
+        // Margins in viewBox units
+        Set(varMLeft,   If(varIsHoriz, 130, 75));
+        Set(varMRight,  30);
+        Set(varMTop,    20);
+        Set(varMBottom,
+          If(varIsHoriz, 50,
+            If(varLabelAngle >= 90, 110,
+              If(varLabelAngle >= 45, 90, 55)
+            )
+          )
+        );
+
+        // Scale factors: pixel = viewBox * scale
+        Set(varScaleX, varChartW / vbW);
+        Set(varScaleY, varChartH / vbH);
 
         Set(varPlotX, varMLeft);
         Set(varPlotY, varMTop);
         Set(varPlotW, vbW - varMLeft - varMRight);
-        Set(varPlotH, vbH - varMTop - varMBottom);
+        Set(varPlotH, vbH - varMTop  - varMBottom);
+
+        // Pixel coordinates of the plot rectangle inside the chart image control.
+        // Used to position conInteractive so it covers only the plot area.
+        Set(varPlotPixX, varPlotX * varScaleX);
+        Set(varPlotPixY, varPlotY * varScaleY);
+        Set(varPlotPixW, varPlotW * varScaleX);
+        Set(varPlotPixH, varPlotH * varScaleY);
 
         // ====
-        // SECTION 6: BAR GEOMETRY PARAMETERS
+        // SECTION 7: BAR GEOMETRY PARAMETERS
         // ====
-        Set(varGapRatio,
-          Min(0.8, Max(0.05, Coalesce(Self.GroupGapRatio, 0.25)))
-        );
+        Set(varGapRatio, Min(0.8, Max(0.05, Coalesce(cmpBarChart.GroupGapRatio, 0.25))));
 
         // Category axis length and value axis length in viewBox units
         Set(varCatAxisLen, If(varIsHoriz, varPlotH, varPlotW));
         Set(varValAxisLen, If(varIsHoriz, varPlotW, varPlotH));
 
-        Set(varGroupW, varCatAxisLen / Max(varCatCount, 1));
-        Set(varGapW, varGroupW * varGapRatio);
+        Set(varGroupW,  varCatAxisLen / Max(varCatCount, 1));
+        Set(varGapW,    varGroupW * varGapRatio);
         Set(varUsableW, varGroupW - varGapW);
 
-        // Individual bar width (grouped: divided among bar series; else full usable)
+        // Individual bar width in viewBox units
         Set(varBarW,
-          If(
-            varMode = "Grouped",
+          If(varMode = "Grouped",
             varUsableW / Max(varBarSerCount, 1),
             varUsableW
           )
         );
 
         // ====
-        // SECTION 7: BUILD varBarSegments
+        // SECTION 8: BUILD varBarSegments
         // ====
-        // One record per item with computed bar geometry in viewBox coords.
-        Set(varBarSegments,
+        // One record per normalized item with full bar geometry in viewBox coords.
+        // SegKey = Category & "|" & Series  (unique segment identifier).
+        Set(
+          varBarSegments,
           ForAll(
-            Self.Items,
+            varItemsNorm,
             With(
               {
                 _cat: LookUp(varCategories, CatName = Category),
@@ -484,113 +615,118 @@ ComponentDefinitions:
               },
               With(
                 {
-                  _catIdx: Coalesce(_cat.CatIdx, 1),
-                  _serIdx: Coalesce(_ser.SerIdx, 1),
-                  _color: Coalesce(_ser.SerColor, "#D1D5DB"),
-                  _drawAs: Coalesce(_ser.SerDrawAs, "bar"),
-                  _marker: Coalesce(_ser.SerMarker, "None"),
-                  _cumInCat: If(
-                    Or(varMode = "Stacked", varMode = "Stacked100"),
-                    Coalesce(
-                      Sum(
-                        Filter(Self.Items,
-                          Category = ThisRecord.Category And
-                          Coalesce(LookUp(varSeriesList, SerName = Series).SerIdx, 0) < Coalesce(_ser.SerIdx, 0) And
-                          Lower(Coalesce(LookUp(varSeriesList, SerName = Series).SerDrawAs, "bar")) = "bar"
-                        ),
-                        Coalesce(Value, 0)
-                      ), 0),
-                    0
-                  ),
-                  _catTotal: Max(
-                    Sum(Filter(Self.Items,
-                      Category = ThisRecord.Category And
-                      Lower(Coalesce(LookUp(varSeriesList, SerName = Series).SerDrawAs, "bar")) = "bar"
-                    ), Coalesce(Value, 0)),
-                    0.001
-                  ),
-                  _barPosIdx: If(
-                    varMode = "Grouped",
+                  _catIdx:    Coalesce(_cat.CatIdx, 1),
+                  _serIdx:    Coalesce(_ser.SerIdx, 1),
+                  _color:     Coalesce(_ser.SerColor, "#D1D5DB"),
+                  _drawAs:    Coalesce(_ser.SerDrawAs, "bar"),
+                  _marker:    Coalesce(_ser.SerMarker, "None"),
+                  _barPosIdx: If(varMode = "Grouped",
                     CountIf(varSeriesList, SerIdx <= Coalesce(_ser.SerIdx, 0) And SerDrawAs = "bar"),
                     1
                   )
                 },
                 With(
                   {
-                    _dispVal: If(varMode = "Stacked100", _val / _catTotal * 100, _val),
-                    _cumDisp: If(varMode = "Stacked100", _cumInCat / _catTotal * 100, _cumInCat)
+                    _cumInCat: If(
+                      Or(varMode = "Stacked", varMode = "Stacked100"),
+                      Coalesce(
+                        Sum(
+                          Filter(varItemsNorm,
+                            Category = ThisRecord.Category And
+                            Coalesce(LookUp(varSeriesList, SerName = Series).SerIdx, 0) < _serIdx And
+                            Coalesce(LookUp(varSeriesList, SerName = Series).SerDrawAs, "bar") = "bar"
+                          ),
+                          Coalesce(Value, 0)
+                        ),
+                        0
+                      ),
+                      0
+                    ),
+                    _catTotal: Max(
+                      Sum(
+                        Filter(varItemsNorm,
+                          Category = ThisRecord.Category And
+                          Coalesce(LookUp(varSeriesList, SerName = Series).SerDrawAs, "bar") = "bar"
+                        ),
+                        Coalesce(Value, 0)
+                      ),
+                      0.001
+                    )
                   },
                   With(
                     {
-                      _v0: If(
-                        Or(varMode = "Stacked", varMode = "Stacked100"),
-                        Max((_cumDisp - varYMin) / varYRange, 0),
-                        Max((0 - varYMin) / varYRange, 0)
-                      ),
-                      _v1: If(
-                        Or(varMode = "Stacked", varMode = "Stacked100"),
-                        Max((_cumDisp + _dispVal - varYMin) / varYRange, 0),
-                        Max((_dispVal - varYMin) / varYRange, 0)
-                      ),
-                      _catGroupStart: (_catIdx - 1) / Max(varCatCount, 1),
-                      _catGroupMid: (_catIdx - 0.5) / Max(varCatCount, 1),
-                      _gapFrac: varGapW / (2 * varCatAxisLen)
+                      _dispVal: If(varMode = "Stacked100", _val / _catTotal * 100, _val),
+                      _cumDisp: If(varMode = "Stacked100", _cumInCat / _catTotal * 100, _cumInCat)
                     },
                     With(
                       {
-                        _catBarStart: If(
-                          varMode = "Grouped",
-                          _catGroupStart + _gapFrac + (_barPosIdx - 1) * varBarW / varCatAxisLen,
-                          _catGroupStart + _gapFrac
+                        _v0: If(Or(varMode = "Stacked", varMode = "Stacked100"),
+                          Max((_cumDisp - varYMin) / varYRange, 0),
+                          Max((0 - varYMin) / varYRange, 0)
                         ),
-                        _catBarW: If(varMode = "Grouped", varBarW, varUsableW) / varCatAxisLen
+                        _v1: If(Or(varMode = "Stacked", varMode = "Stacked100"),
+                          Max((_cumDisp + _dispVal - varYMin) / varYRange, 0),
+                          Max((_dispVal - varYMin) / varYRange, 0)
+                        ),
+                        _catGroupStart: (_catIdx - 1) / Max(varCatCount, 1),
+                        _catGroupMid:   (_catIdx - 0.5) / Max(varCatCount, 1),
+                        _gapFrac:       varGapW / (2 * varCatAxisLen)
                       },
                       With(
                         {
-                          _bx: If(varIsHoriz,
-                            varPlotX + _v0 * varPlotW,
-                            varPlotX + _catBarStart * varPlotW
+                          _catBarStart: If(varMode = "Grouped",
+                            _catGroupStart + _gapFrac + (_barPosIdx - 1) * varBarW / varCatAxisLen,
+                            _catGroupStart + _gapFrac
                           ),
-                          _by: If(varIsHoriz,
-                            varPlotY + _catBarStart * varPlotH,
-                            varPlotY + varPlotH * (1 - _v1)
-                          ),
-                          _bw: If(varIsHoriz,
-                            Max((_v1 - _v0) * varPlotW, 0),
-                            Max(_catBarW * varPlotW, 0)
-                          ),
-                          _bh: If(varIsHoriz,
-                            Max(_catBarW * varPlotH, 0),
-                            Max((_v1 - _v0) * varPlotH, 0)
-                          ),
-                          _px: If(varIsHoriz,
-                            varPlotX + _v1 * varPlotW,
-                            varPlotX + _catGroupMid * varPlotW
-                          ),
-                          _py: If(varIsHoriz,
-                            varPlotY + _catGroupMid * varPlotH,
-                            varPlotY + varPlotH * (1 - _v1)
-                          )
+                          _catBarW: If(varMode = "Grouped", varBarW, varUsableW) / varCatAxisLen
                         },
-                        {
-                          SegKey: Category & "|" & Series,
-                          Category: Category,
-                          Series: Series,
-                          Value: _val,
-                          DisplayValue: _dispVal,
-                          CatIdx: _catIdx,
-                          SerIdx: _serIdx,
-                          Color: _color,
-                          DrawAs: _drawAs,
-                          MarkerType: _marker,
-                          BarX: _bx,
-                          BarY: _by,
-                          BarW: _bw,
-                          BarH: _bh,
-                          PointX: _px,
-                          PointY: _py,
-                          Tooltip: Category & " / " & Series & ": " & Text(_val)
-                        }
+                        With(
+                          {
+                            _bx: If(varIsHoriz,
+                              varPlotX + _v0 * varPlotW,
+                              varPlotX + _catBarStart * varPlotW
+                            ),
+                            _by: If(varIsHoriz,
+                              varPlotY + _catBarStart * varPlotH,
+                              varPlotY + varPlotH * (1 - _v1)
+                            ),
+                            _bw: If(varIsHoriz,
+                              Max((_v1 - _v0) * varPlotW, 0),
+                              Max(_catBarW * varPlotW, 0)
+                            ),
+                            _bh: If(varIsHoriz,
+                              Max(_catBarW * varPlotH, 0),
+                              Max((_v1 - _v0) * varPlotH, 0)
+                            ),
+                            _px: If(varIsHoriz,
+                              varPlotX + _v1 * varPlotW,
+                              varPlotX + _catGroupMid * varPlotW
+                            ),
+                            _py: If(varIsHoriz,
+                              varPlotY + _catGroupMid * varPlotH,
+                              varPlotY + varPlotH * (1 - _v1)
+                            )
+                          },
+                          {
+                            SegKey:       Category & "|" & Series,
+                            Category:     Category,
+                            Series:       Series,
+                            Value:        _val,
+                            DisplayValue: _dispVal,
+                            CatIdx:       _catIdx,
+                            SerIdx:       _serIdx,
+                            Color:        _color,
+                            DrawAs:       _drawAs,
+                            MarkerType:   _marker,
+                            BarX:         _bx,
+                            BarY:         _by,
+                            BarW:         _bw,
+                            BarH:         _bh,
+                            PointX:       _px,
+                            PointY:       _py,
+                            Tooltip:      Category & " / " & Series & ": " & Text(_val)
+                          }
+                        )
                       )
                     )
                   )
@@ -600,33 +736,27 @@ ComponentDefinitions:
           )
         );
 
-        // ====
-        // SECTION 8: SVG ASSEMBLY
-        // ====
-        // Format shorthand used throughout
-        // f = "[$-en-US]0.00"
+        // Validate selection: clear if key no longer exists in segments
+        If(
+          varSelectedKey <> "" And
+          IsBlank(LookUp(varBarSegments, SegKey = varSelectedKey)),
+          Set(varSelectedKey, "")
+        );
 
-        // 8a: Grid lines at each minor tick on the value axis
-        // Major grid lines are drawn with a heavier stroke; minor with a lighter one.
+        // ====
+        // SECTION 9: SVG ASSEMBLY
+        // ====
+
+        // 9a: Grid lines -- uses varTickRows built in Section 5
         Set(varSvgGrid,
           If(Not(varShowGrid), "",
             Concat(
-              Filter(
-                ForAll(
-                  Sequence(RoundDown(varYRange / Max(varMinorTick, 0.001), 0) + 1) As tN,
-                  {
-                    _tv: varYMin + (tN.Value - 1) * varMinorTick,
-                    _isMaj: Abs(Mod(Round((tN.Value - 1) * varMinorTick, 6), Round(varMajorTick, 6))) < 0.001
-                       Or (tN.Value - 1) * varMinorTick = 0
-                  }
-                ),
-                _tv <= varYMax And _tv > varYMin
-              ),
+              Filter(varTickRows, _tv <= varYMax And _tv > varYMin),
               With(
                 {
                   _frac: (_tv - varYMin) / varYRange,
-                  _sw: If(_isMaj, "1", "0.5"),
-                  _sc: If(_isMaj, "#CBD5E1", "#E5E7EB")
+                  _sw:   If(_isMaj, "1", "0.5"),
+                  _sc:   If(_isMaj, "#CBD5E1", "#E5E7EB")
                 },
                 If(varIsHoriz,
                   "<line x1='" & Text(varPlotX + _frac * varPlotW, "[$-en-US]0.00") &
@@ -645,7 +775,7 @@ ComponentDefinitions:
           )
         );
 
-        // 8b: Bar rectangles (only for bar-type series)
+        // 9b: Bar rectangles
         Set(varSvgBars,
           Concat(
             Sort(Filter(varBarSegments, DrawAs = "bar"), CatIdx * 1000 + SerIdx),
@@ -653,12 +783,11 @@ ComponentDefinitions:
             "' y='" & Text(BarY, "[$-en-US]0.00") &
             "' width='" & Text(Max(BarW, 0), "[$-en-US]0.00") &
             "' height='" & Text(Max(BarH, 0), "[$-en-US]0.00") &
-            "' fill='" & Color &
-            "' rx='2'/>"
+            "' fill='" & Color & "' rx='2'/>"
           )
         );
 
-        // 8c: Line series -- one polyline per line-type series
+        // 9c: Line series polylines
         Set(varSvgLines,
           Concat(
             Filter(varSeriesList, SerDrawAs <> "bar"),
@@ -673,7 +802,7 @@ ComponentDefinitions:
           )
         );
 
-        // 8d: Line markers at each data point
+        // 9d: Line markers
         Set(varSvgMarkers,
           Concat(
             Filter(varBarSegments, DrawAs <> "bar"),
@@ -684,8 +813,7 @@ ComponentDefinitions:
                 _mc: Color,
                 _mt: MarkerType
               },
-              If(
-                _mt = "Circle",
+              If(_mt = "Circle",
                 "<circle cx='" & _mx & "' cy='" & _my & "' r='5' fill='white' stroke='" & _mc & "' stroke-width='2'/>",
                 _mt = "FilledCircle",
                 "<circle cx='" & _mx & "' cy='" & _my & "' r='5' fill='" & _mc & "' stroke='white' stroke-width='1.5'/>",
@@ -708,31 +836,29 @@ ComponentDefinitions:
           )
         );
 
-        // 8e: Value labels on or above bar segments
+        // 9e: Value labels on bars
         Set(varSvgValueLabels,
           If(Not(varShowValues), "",
             Concat(
               Filter(varBarSegments, DrawAs = "bar"),
               With(
                 {
-                  _tx: If(varIsHoriz, BarX + BarW + 4, BarX + BarW / 2),
-                  _ty: If(varIsHoriz, BarY + BarH / 2, BarY - 4),
+                  _tx:     If(varIsHoriz, BarX + BarW + 4, BarX + BarW / 2),
+                  _ty:     If(varIsHoriz, BarY + BarH / 2, BarY - 4),
                   _anchor: If(varIsHoriz, "start", "middle")
                 },
                 "<text x='" & Text(_tx, "[$-en-US]0.00") &
                 "' y='" & Text(_ty, "[$-en-US]0.00") &
                 "' text-anchor='" & _anchor &
                 "' dominant-baseline='middle' font-size='14' font-family='Segoe UI' fill='#333'>" &
-                Text(Round(DisplayValue, 1)) &
-                "</text>"
+                Text(Round(DisplayValue, 1)) & "</text>"
               )
             )
           )
         );
 
-        // 8f: Value axis line, tick marks, and labels
+        // 9f: Value axis (line + ticks + labels) -- reuses varTickRows from Section 5
         Set(varSvgValueAxis,
-          // Axis line
           If(varIsHoriz,
             "<line x1='" & Text(varPlotX, "[$-en-US]0.00") &
             "' y1='" & Text(varPlotY + varPlotH, "[$-en-US]0.00") &
@@ -745,57 +871,45 @@ ComponentDefinitions:
             "' y2='" & Text(varPlotY + varPlotH, "[$-en-US]0.00") &
             "' stroke='#333' stroke-width='1.5'/>"
           ) &
-          // Tick marks and labels at each tick
           Concat(
-            Filter(
-              ForAll(
-                Sequence(RoundDown(varYRange / Max(varMinorTick, 0.001), 0) + 1) As tN,
-                {
-                  _tv: varYMin + (tN.Value - 1) * varMinorTick,
-                  _isMajor: Abs(Mod(Round((tN.Value - 1) * varMinorTick, 6), Round(varMajorTick, 6))) < 0.001
-                     Or (tN.Value - 1) * varMinorTick = 0
-                }
-              ),
-              _tv <= varYMax
-            ),
+            Filter(varTickRows, _tv <= varYMax),
             With(
               {
-                _frac: (_tv - varYMin) / varYRange,
-                _tickLen: If(_isMajor, 8, 4)
+                _frac:    (_tv - varYMin) / varYRange,
+                _tickLen: If(_isMaj, 8, 4)
               },
               If(varIsHoriz,
-                // Horizontal: value ticks on bottom X axis
                 "<line x1='" & Text(varPlotX + _frac * varPlotW, "[$-en-US]0.00") &
                 "' y1='" & Text(varPlotY + varPlotH, "[$-en-US]0.00") &
                 "' x2='" & Text(varPlotX + _frac * varPlotW, "[$-en-US]0.00") &
                 "' y2='" & Text(varPlotY + varPlotH + _tickLen, "[$-en-US]0.00") &
-                "' stroke='#333' stroke-width='" & If(_isMajor, "1.5", "0.75") & "'/>" &
-                If(_isMajor,
+                "' stroke='#333' stroke-width='" & If(_isMaj, "1.5", "0.75") & "'/>" &
+                If(_isMaj,
                   "<text x='" & Text(varPlotX + _frac * varPlotW, "[$-en-US]0.00") &
                   "' y='" & Text(varPlotY + varPlotH + 22, "[$-en-US]0.00") &
                   "' text-anchor='middle' font-size='14' font-family='Segoe UI' fill='#555'>" &
                   Text(Round(_tv, 2)) & "</text>",
-                  ""),
-                // Vertical: value ticks on left Y axis
+                  ""
+                ),
                 "<line x1='" & Text(varPlotX - _tickLen, "[$-en-US]0.00") &
                 "' y1='" & Text(varPlotY + varPlotH * (1 - _frac), "[$-en-US]0.00") &
                 "' x2='" & Text(varPlotX, "[$-en-US]0.00") &
                 "' y2='" & Text(varPlotY + varPlotH * (1 - _frac), "[$-en-US]0.00") &
-                "' stroke='#333' stroke-width='" & If(_isMajor, "1.5", "0.75") & "'/>" &
-                If(_isMajor,
+                "' stroke='#333' stroke-width='" & If(_isMaj, "1.5", "0.75") & "'/>" &
+                If(_isMaj,
                   "<text x='" & Text(varPlotX - 12, "[$-en-US]0.00") &
                   "' y='" & Text(varPlotY + varPlotH * (1 - _frac), "[$-en-US]0.00") &
                   "' text-anchor='end' dominant-baseline='middle' font-size='14' font-family='Segoe UI' fill='#555'>" &
                   Text(Round(_tv, 2)) & "</text>",
-                  "")
+                  ""
+                )
               )
             )
           )
         );
 
-        // 8g: Category axis line, tick marks, and labels
+        // 9g: Category axis (line + ticks + labels)
         Set(varSvgCatAxis,
-          // Axis line
           If(varIsHoriz,
             "<line x1='" & Text(varPlotX, "[$-en-US]0.00") &
             "' y1='" & Text(varPlotY, "[$-en-US]0.00") &
@@ -808,13 +922,11 @@ ComponentDefinitions:
             "' y2='" & Text(varPlotY + varPlotH, "[$-en-US]0.00") &
             "' stroke='#333' stroke-width='1.5'/>"
           ) &
-          // Category tick marks and labels
           Concat(
             varCategories,
             With(
               { _mid: (CatIdx - 0.5) / Max(varCatCount, 1) },
               If(varIsHoriz,
-                // Horizontal orientation: categories on Y axis (left)
                 "<line x1='" & Text(varPlotX - 6, "[$-en-US]0.00") &
                 "' y1='" & Text(varPlotY + _mid * varPlotH, "[$-en-US]0.00") &
                 "' x2='" & Text(varPlotX, "[$-en-US]0.00") &
@@ -824,7 +936,6 @@ ComponentDefinitions:
                 "' y='" & Text(varPlotY + _mid * varPlotH, "[$-en-US]0.00") &
                 "' text-anchor='end' dominant-baseline='middle' font-size='14' font-family='Segoe UI' fill='#333'>" &
                 CatName & "</text>",
-                // Vertical orientation: categories on X axis (bottom)
                 "<line x1='" & Text(varPlotX + _mid * varPlotW, "[$-en-US]0.00") &
                 "' y1='" & Text(varPlotY + varPlotH, "[$-en-US]0.00") &
                 "' x2='" & Text(varPlotX + _mid * varPlotW, "[$-en-US]0.00") &
@@ -848,47 +959,45 @@ ComponentDefinitions:
           )
         );
 
-        // 8h: Axis titles (optional)
+        // 9h: Axis titles
         Set(varSvgAxisTitles,
-          If(Coalesce(Self.ValueAxisTitle, "") <> "",
+          If(Coalesce(cmpBarChart.ValueAxisTitle, "") <> "",
             If(varIsHoriz,
               "<text x='" & Text(varPlotX + varPlotW / 2, "[$-en-US]0.00") &
               "' y='" & Text(vbH - 4, "[$-en-US]0.00") &
               "' text-anchor='middle' font-size='16' font-family='Segoe UI' font-weight='600' fill='#333'>" &
-              Self.ValueAxisTitle & "</text>",
+              cmpBarChart.ValueAxisTitle & "</text>",
               "<text x='14' y='" & Text(varPlotY + varPlotH / 2, "[$-en-US]0.00") &
               "' text-anchor='middle' font-size='16' font-family='Segoe UI' font-weight='600' fill='#333'" &
               " transform='rotate(-90,14," & Text(varPlotY + varPlotH / 2, "[$-en-US]0.00") & ")'>" &
-              Self.ValueAxisTitle & "</text>"
+              cmpBarChart.ValueAxisTitle & "</text>"
             ),
             ""
           ) &
-          If(Coalesce(Self.CategoryAxisTitle, "") <> "",
+          If(Coalesce(cmpBarChart.CategoryAxisTitle, "") <> "",
             If(varIsHoriz,
               "<text x='14' y='" & Text(varPlotY + varPlotH / 2, "[$-en-US]0.00") &
               "' text-anchor='middle' font-size='16' font-family='Segoe UI' font-weight='600' fill='#333'" &
               " transform='rotate(-90,14," & Text(varPlotY + varPlotH / 2, "[$-en-US]0.00") & ")'>" &
-              Self.CategoryAxisTitle & "</text>",
+              cmpBarChart.CategoryAxisTitle & "</text>",
               "<text x='" & Text(varPlotX + varPlotW / 2, "[$-en-US]0.00") &
               "' y='" & Text(vbH - 4, "[$-en-US]0.00") &
               "' text-anchor='middle' font-size='16' font-family='Segoe UI' font-weight='600' fill='#333'>" &
-              Self.CategoryAxisTitle & "</text>"
+              cmpBarChart.CategoryAxisTitle & "</text>"
             ),
             ""
           )
         );
 
-        // 8i: Assemble complete SVG
+        // 9i: Assemble full SVG
         Set(varSVG,
           If(
             Or(IsEmpty(varBarSegments), varCatCount = 0),
-            // Empty state placeholder
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 700'>" &
             "<rect x='75' y='20' width='895' height='630' fill='#F3F4F6' stroke='#E5E7EB' rx='4'/>" &
             "<text x='500' y='340' text-anchor='middle' font-size='16' font-family='Segoe UI' fill='#9CA3AF'>" &
-            Coalesce(Self.EmptyStateText, "No data") &
+            Coalesce(cmpBarChart.EmptyStateText, "No data") &
             "</text></svg>",
-            // Data SVG
             "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 " & Text(vbW) & " " & Text(vbH) & "'>" &
             varSvgGrid &
             varSvgBars &
@@ -902,64 +1011,94 @@ ComponentDefinitions:
           )
         );
 
-        Set(varSelectedKey, If(Coalesce(varSelectedKey, "") = "", "", varSelectedKey));
-
         // ====
-        // SECTION 9: BUTTON OVERLAY GRID
+        // SECTION 10: BUILD varOverlayRects  (exact-rect overlay)
         // ====
-        Set(gridCols, 25);
-        Set(gridRows, 20);
-        Set(hitRadius, 15);
+        // Strategy: one record per bar segment (or line point) with its exact
+        // pixel rectangle inside the plot area.
+        //
+        // Coordinate mapping (viewBox -> plot-local pixels):
+        //   pixX = (vbX - varPlotX) / varPlotW * varPlotPixW
+        //   pixY = (vbY - varPlotY) / varPlotH * varPlotPixH
+        //   pixW = vbW_units / varPlotW * varPlotPixW
+        //   pixH = vbH_units / varPlotH * varPlotPixH
+        //
+        // The gallery (galOverlay) is positioned at (varPlotPixX, varPlotPixY)
+        // relative to the chart image, so these are plot-local coordinates.
+        //
+        // Line point hit areas use a fixed pixel radius of 18px.
+        // Bar rects smaller than 4px in either dimension are given a minimum
+        // hit area of 4px so they remain tappable.
+        //
+        // The RowIdx field is the 1-based row number used by the absolute-Y trick:
+        //   Button.Y = RectY - (ThisItem.RowIdx - 1) * 1
+        // This neutralizes the gallery's 1px-per-row automatic offset so each
+        // button renders at its true plot-local Y regardless of its row position.
 
-        // Pixel dimensions of the interactive overlay
-        Set(gridPixW, varChartW);
-        Set(gridPixH, varChartH);
-        Set(btnW, gridPixW / gridCols);
-        Set(btnH, gridPixH / gridRows);
+        Set(varLineHitR, 18);
 
-        // Map each grid cell to a bar segment or line point
-        Set(varBarButtons,
+        // Bar segments -> overlay rects (intermediate collection)
+        ClearCollect(
+          varOverlayRectsI,
           ForAll(
-            Sequence(gridRows * gridCols) As cell,
+            Filter(varBarSegments, DrawAs = "bar"),
             With(
               {
-                _row: RoundDown((cell.Value - 1) / gridCols, 0),
-                _col: Mod(cell.Value - 1, gridCols)
+                _px: (BarX - varPlotX) / varPlotW * varPlotPixW,
+                _py: (BarY - varPlotY) / varPlotH * varPlotPixH,
+                _pw: Max(BarW / varPlotW * varPlotPixW, 4),
+                _ph: Max(BarH / varPlotH * varPlotPixH, 4)
               },
-              With(
-                {
-                  // Map cell center to viewBox coordinates
-                  _vbX: varPlotX + (_col + 0.5) * varPlotW / gridCols,
-                  _vbY: varPlotY + (_row + 0.5) * varPlotH / gridRows
-                },
-                With(
-                  {
-                    _hitSeg: Coalesce(
-                      // First check bar rectangles
-                      LookUp(
-                        Sort(varBarSegments, SerIdx, SortOrder.Descending),
-                        DrawAs = "bar" And
-                        _vbX >= BarX And _vbX < BarX + BarW And
-                        _vbY >= BarY And _vbY < BarY + BarH
-                      ),
-                      // Then check line point hit areas
-                      LookUp(
-                        varBarSegments,
-                        DrawAs <> "bar" And
-                        Abs(_vbX - PointX) < hitRadius And
-                        Abs(_vbY - PointY) < hitRadius
-                      )
-                    )
-                  },
-                  {
-                    Ni: _row,
-                    Mj: _col,
-                    SegKey: If(Not(IsBlank(_hitSeg)), _hitSeg.SegKey, ""),
-                    SegColor: If(Not(IsBlank(_hitSeg)), _hitSeg.Color, ""),
-                    SegTooltip: If(Not(IsBlank(_hitSeg)), _hitSeg.Tooltip, "")
-                  }
-                )
-              )
+              {
+                SegKey:   SegKey,
+                Category: Category,
+                Series:   Series,
+                Color:    Color,
+                Tooltip:  Tooltip,
+                IsLine:   false,
+                RectX:    _px,
+                RectY:    _py,
+                RectW:    _pw,
+                RectH:    _ph
+              }
+            )
+          )
+        );
+
+        // Line point hit areas -> append to intermediate collection
+        Collect(
+          varOverlayRectsI,
+          ForAll(
+            Filter(varBarSegments, DrawAs <> "bar"),
+            With(
+              {
+                _px: (PointX - varPlotX) / varPlotW * varPlotPixW - varLineHitR,
+                _py: (PointY - varPlotY) / varPlotH * varPlotPixH - varLineHitR
+              },
+              {
+                SegKey:   SegKey,
+                Category: Category,
+                Series:   Series,
+                Color:    Color,
+                Tooltip:  Tooltip,
+                IsLine:   true,
+                RectX:    _px,
+                RectY:    _py,
+                RectW:    varLineHitR * 2,
+                RectH:    varLineHitR * 2
+              }
+            )
+          )
+        );
+
+        // Stamp a 1-based RowIdx onto each overlay rect so the gallery Y trick works.
+        ClearCollect(
+          varOverlayRects,
+          ForAll(
+            Sequence(CountRows(varOverlayRectsI)) As IdxRow,
+            With(
+              { rectItem: Index(varOverlayRectsI, IdxRow.Value) },
+              Patch(rectItem, { RowIdx: IdxRow.Value })
             )
           )
         );
@@ -970,11 +1109,7 @@ ComponentDefinitions:
           ""
         )
       SelectedKey: =varSelectedKey
-      SelectedSegment: |-
-        =LookUp(
-          cmpBarChart.Items,
-          Category & "|" & Series = varSelectedKey
-        )
+      SelectedSegment: =LookUp(varBarSegments, SegKey = varSelectedKey)
       SelectedSeries: |-
         =If(
           varSelectedKey <> "",
@@ -1155,8 +1290,8 @@ ComponentDefinitions:
                         Size: =12
                         Text: =Coalesce(cmpBarChart.EmptyStateText, "No data")
                         Visible: |-
-                          =IsEmpty(cmpBarChart.Items) Or
-                          Sum(cmpBarChart.Items, Coalesce(Value, 0)) = 0
+                          =IsEmpty(varItemsNorm) Or
+                          Sum(varItemsNorm, Coalesce(Value, 0)) = 0
                         Width: =varChartW
                         X: =cmpBarChart_imgChart.X
                         Y: =cmpBarChart_imgChart.Y
@@ -1174,8 +1309,9 @@ ComponentDefinitions:
                           =Coalesce(cmpBarChart.AccessibleLabel, "Bar chart") &
                           ". " &
                           Concat(
-                            Sort(cmpBarChart.Items, Coalesce(Order, 0)),
-                            Coalesce(Category, "?") & " " & Coalesce(Series, "") & ": " & Text(Coalesce(Value, 0)) & ", "
+                            SortByColumns(varItemsNorm, "Order", SortOrder.Ascending),
+                            Coalesce(Category, "?") & " " & Coalesce(Series, "") &
+                            ": " & Text(Coalesce(Value, 0)) & ", "
                           )
                         Visible: =false
                         Width: =1
@@ -1183,114 +1319,89 @@ ComponentDefinitions:
                 Control: GroupContainer@1.5.0
                 Variant: ManualLayout
                 Properties:
-                  BorderStyle: =BorderStyle.None
+                  BorderColor: |-
+                    =If(
+                      Coalesce(cmpBarChart.InteractiveBorderColor, "") <> "",
+                      ColorValue(cmpBarChart.InteractiveBorderColor),
+                      RGBA(0, 0, 0, 0)
+                    )
+                  BorderStyle: =Coalesce(cmpBarChart.InteractiveBorderStyle, BorderStyle.None)
+                  BorderThickness: =Coalesce(cmpBarChart.InteractiveBorderWidth, 0)
                   DropShadow: =DropShadow.None
-                  Height: =cmpBarChart_imgChart.Height
-                  Visible: =!cmpBarChart.IsPrinting
-                  Width: =cmpBarChart_imgChart.Width
-                  X: =cmpBarChart_imgChart.X
-                  Y: =cmpBarChart_imgChart.Y
+                  Height: =varPlotPixH
+                  Visible: =Not(cmpBarChart.IsPrinting)
+                  Width: =varPlotPixW
+                  X: =varPlotPixX + varPadL
+                  Y: =varPadT + varTitleH + varPlotPixY
                 Children:
-                  - cmpBarChart_galGridVertical:
+                  - cmpBarChart_galOverlay:
                       Control: Gallery@2.15.0
                       Variant: BrowseLayout_Vertical_TwoTextOneImageVariant_ver5.0
                       Properties:
                         BorderColor: =RGBA(0, 0, 0, 0)
                         Height: =Parent.Height
-                        Items: |-
-                          =ForAll(
-                            Sequence(gridRows),
-                            { RowIndex: ThisRecord.Value }
-                          )
+                        Items: =varOverlayRects
                         ShowScrollbar: =false
-                        TemplateSize: =btnH
-                        Visible: =Not(IsEmpty(varBarSegments))
+                        TemplateSize: =1
+                        Visible: =Not(IsEmpty(varOverlayRects))
                         Width: =Parent.Width
                       Children:
-                        - cmpBarChart_galGridHorizontal:
-                            Control: Gallery@2.15.0
-                            Variant: Horizontal
+                        - cmpBarChart_btnHit:
+                            Control: Classic/Button@2.2.0
                             Properties:
-                              BorderColor: =RGBA(0, 0, 0, 0)
-                              Height: =Parent.TemplateHeight
-                              Items: |-
-                                =ForAll(
-                                  Sequence(gridCols) As ColRecord,
-                                  With(
-                                    {
-                                      _btn: LookUp(
-                                        varBarButtons,
-                                        Ni = ThisItem.RowIndex - 1 And Mj = ColRecord.Value - 1
-                                      )
-                                    },
-                                    {
-                                      RowIndex: ThisItem.RowIndex,
-                                      ColIndex: ColRecord.Value,
-                                      SegKey: Coalesce(_btn.SegKey, ""),
-                                      SegColor: Coalesce(_btn.SegColor, ""),
-                                      SegTooltip: Coalesce(_btn.SegTooltip, "")
-                                    }
-                                  )
+                              BorderColor: |-
+                                =If(
+                                  Coalesce(cmpBarChart.HitButtonBorderColor, "") <> "",
+                                  ColorValue(cmpBarChart.HitButtonBorderColor),
+                                  RGBA(0, 0, 0, 0)
                                 )
-                              ShowScrollbar: =false
-                              TemplatePadding: =0
-                              TemplateSize: =btnW
-                              Width: =Parent.TemplateWidth
-                            Children:
-                              - cmpBarChart_btnGridHit:
-                                  Control: Classic/Button@2.2.0
-                                  Properties:
-                                    BorderColor: =RGBA(0, 0, 0, 0)
-                                    BorderStyle: =BorderStyle.None
-                                    Color: =RGBA(255, 255, 255, 1)
-                                    DisabledBorderColor: =RGBA(0, 0, 0, 0)
-                                    DisabledColor: =RGBA(161, 159, 157, 1)
-                                    DisabledFill: =RGBA(0, 0, 0, 0)
-                                    DisplayMode: |-
-                                      =If(
-                                        Coalesce(ThisItem.SegKey, "") <> "",
-                                        DisplayMode.Edit,
-                                        DisplayMode.Disabled
-                                      )
-                                    Fill: =RGBA(0, 0, 0, 0)
-                                    Font: =Font.'Segoe UI'
-                                    Height: =Parent.TemplateHeight
-                                    HoverBorderColor: =RGBA(0, 0, 0, 0)
-                                    HoverColor: =RGBA(255, 255, 255, 1)
-                                    HoverFill: |-
-                                      =If(
-                                        Coalesce(ThisItem.SegColor, "") <> "",
-                                        RGBA(
-                                          Value(Hex2Dec(Mid(ThisItem.SegColor, 2, 2))),
-                                          Value(Hex2Dec(Mid(ThisItem.SegColor, 4, 2))),
-                                          Value(Hex2Dec(Mid(ThisItem.SegColor, 6, 2))),
-                                          0.12
-                                        ),
-                                        RGBA(0, 0, 0, 0)
-                                      )
-                                    OnSelect: |-
-                                      =Set(varSelectedKey, ThisItem.SegKey);
-                                      If(varSelectedKey <> "", cmpBarChart.OnBarSelect())
-                                    PressedBorderColor: =RGBA(0, 69, 120, 1)
-                                    PressedColor: =RGBA(255, 255, 255, 1)
-                                    PressedFill: |-
-                                      =If(
-                                        Coalesce(ThisItem.SegColor, "") <> "",
-                                        RGBA(
-                                          Value(Hex2Dec(Mid(ThisItem.SegColor, 2, 2))),
-                                          Value(Hex2Dec(Mid(ThisItem.SegColor, 4, 2))),
-                                          Value(Hex2Dec(Mid(ThisItem.SegColor, 6, 2))),
-                                          0.6
-                                        ),
-                                        RGBA(0, 0, 0, 0)
-                                      )
-                                    RadiusBottomLeft: =0
-                                    RadiusBottomRight: =0
-                                    RadiusTopLeft: =0
-                                    RadiusTopRight: =0
-                                    Text: =""
-                                    Tooltip: =Coalesce(ThisItem.SegTooltip, "")
-                                    Width: =Parent.TemplateWidth
+                              BorderStyle: =Coalesce(cmpBarChart.HitButtonBorderStyle, BorderStyle.None)
+                              BorderThickness: =Coalesce(cmpBarChart.HitButtonBorderWidth, 0)
+                              Color: =RGBA(255, 255, 255, 0)
+                              DisabledBorderColor: =RGBA(0, 0, 0, 0)
+                              DisabledColor: =RGBA(0, 0, 0, 0)
+                              DisabledFill: =RGBA(0, 0, 0, 0)
+                              Fill: =RGBA(0, 0, 0, 0)
+                              Font: =Font.'Segoe UI'
+                              Height: =ThisItem.RectH
+                              HoverBorderColor: =RGBA(0, 0, 0, 0)
+                              HoverColor: =RGBA(255, 255, 255, 0)
+                              HoverFill: |-
+                                =If(
+                                  Coalesce(ThisItem.Color, "") <> "",
+                                  RGBA(
+                                    Value(Hex2Dec(Mid(ThisItem.Color, 2, 2))),
+                                    Value(Hex2Dec(Mid(ThisItem.Color, 4, 2))),
+                                    Value(Hex2Dec(Mid(ThisItem.Color, 6, 2))),
+                                    0.15
+                                  ),
+                                  RGBA(0, 0, 0, 0.08)
+                                )
+                              OnSelect: |-
+                                =Set(varSelectedKey, ThisItem.SegKey);
+                                If(varSelectedKey <> "", cmpBarChart.OnBarSelect())
+                              PressedBorderColor: =RGBA(0, 0, 0, 0)
+                              PressedColor: =RGBA(255, 255, 255, 0)
+                              PressedFill: |-
+                                =If(
+                                  Coalesce(ThisItem.Color, "") <> "",
+                                  RGBA(
+                                    Value(Hex2Dec(Mid(ThisItem.Color, 2, 2))),
+                                    Value(Hex2Dec(Mid(ThisItem.Color, 4, 2))),
+                                    Value(Hex2Dec(Mid(ThisItem.Color, 6, 2))),
+                                    0.55
+                                  ),
+                                  RGBA(0, 0, 0, 0.25)
+                                )
+                              RadiusBottomLeft: =If(ThisItem.IsLine, 50, 2)
+                              RadiusBottomRight: =If(ThisItem.IsLine, 50, 2)
+                              RadiusTopLeft: =If(ThisItem.IsLine, 50, 2)
+                              RadiusTopRight: =If(ThisItem.IsLine, 50, 2)
+                              Text: =""
+                              Tooltip: =Coalesce(ThisItem.Tooltip, "")
+                              Width: =ThisItem.RectW
+                              X: =ThisItem.RectX
+                              Y: =ThisItem.RectY - (ThisItem.RowIdx - 1)
       - cmpBarChart_timerReset:
           Control: Timer@2.1.0
           Properties:
@@ -1308,11 +1419,20 @@ ComponentDefinitions:
             HoverBorderColor: =RGBA(16, 110, 190, 1)
             HoverColor: =RGBA(255, 255, 255, 1)
             HoverFill: =RGBA(16, 110, 190, 0)
-            OnTimerEnd: =Reset(Parent); Set(varSelectedKey, "");
+            OnTimerEnd: =Reset(Parent);
             PressedBorderColor: =RGBA(16, 110, 190, 1)
             PressedColor: =RGBA(255, 255, 255, 1)
             PressedFill: =RGBA(16, 110, 190, 0)
             Start: =true
-            Text: ="" //Text(Time(0, 0, Self.Value/1000), "hh:mm:ss")
+            Text: =""
             Visible: =false
             Width: =1
+      - cmpBarChart_btnReset:
+          Control: Button@0.0.45
+          Properties:
+            Height: =If(Self.Visible, 22, 1)
+            OnSelect: =Reset(Parent)
+            Visible: =debugResetVisible || true
+            Width: =If(Self.Visible, 50, 1)
+            X: =10
+            Y: =10
