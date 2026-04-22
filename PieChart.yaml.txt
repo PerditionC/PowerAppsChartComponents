@@ -23,6 +23,13 @@ ComponentDefinitions:
         RaiseOnReset: true
         DataType: Text
         Default: ="black"
+      CenterLabelColor:
+        PropertyKind: Input
+        DisplayName: Center Label Color
+        Description: color (CSS) of center label
+        RaiseOnReset: true
+        DataType: Text
+        Default: ="black"
       CenterLabelText:
         PropertyKind: Input
         DisplayName: Center Label Text
@@ -219,7 +226,7 @@ ComponentDefinitions:
         Description: Power Fx numeric format string used when rendering percentages in wedge labels, tooltips, and legend values
         RaiseOnReset: true
         DataType: Text
-        Default: ="[$-en-US]0.0%"
+        Default: ="[$-en-US]0.0"
       SelectedKey:
         PropertyKind: Input
         DisplayName: Selected Key
@@ -289,6 +296,20 @@ ComponentDefinitions:
         DisplayName: Total Value
         Description: Sum of all slice Values in Items
         DataType: Number
+      WedgeLabelColor:
+        PropertyKind: Input
+        DisplayName: Wedge Label Color
+        Description: color (CSS) of wedge labels
+        RaiseOnReset: true
+        DataType: Text
+        Default: ="black" //"white"
+      WedgeLabelsOutside:
+        PropertyKind: Input
+        DisplayName: Wedge Labels Outside
+        Description: should labels be inside (false) or outside pie (true)
+        RaiseOnReset: true
+        DataType: Boolean
+        Default: =true
     Properties:
       ChartDimension: =cmpPieChart_imgChart.Width
       ChartX: =cmpPieChart_imgChart.X
@@ -344,13 +365,11 @@ ComponentDefinitions:
         )
       OnReset: |-
         =// only show reset button for dev work
-        Set(debugResetVisible,true);
+        Set(debugResetVisible, true);
 
         // ====
         // SECTION 0: SELECTION STATE
         // ====
-        // Keep the current selected Key when recalculating.
-        // If SelectedKey is set externally, apply it.
         If(
           Coalesce(Self.SelectedKey, "") <> "",
           Set(varHoveredKey, Self.SelectedKey),
@@ -360,9 +379,6 @@ ComponentDefinitions:
         // ====
         // SECTION 1: PADDING AND TEXT HEIGHTS
         // ====
-        // Cache padding values and compute heights for title and caption
-        // so the chart area can be reduced to prevent overlap.
-
         Set(varPadT, Coalesce(Self.PaddingTop, 6));
         Set(varPadB, Coalesce(Self.PaddingBottom, 6));
         Set(varPadL, Coalesce(Self.PaddingLeft, 6));
@@ -373,15 +389,11 @@ ComponentDefinitions:
         // ====
         // SECTION 2: CHART GEOMETRY
         // ====
-        // The usable area is the component minus padding, title, and caption. (no legend)
-        // ChartSize is the largest square that fits.
-
         With(
           {
             _usableW: Self.Width  - varPadL - varPadR,
             _usableH: Self.Height - varPadT - varPadB - varTitleH - varCaptionH
           },
-
           Set(ChartSize,    Min(_usableW, _usableH));
           Set(ChartCenterX, varPadL + ChartSize / 2);
           Set(ChartCenterY, varPadT + varTitleH + ChartSize / 2)
@@ -408,11 +420,11 @@ ComponentDefinitions:
               { _item: Index(Self.Items, row.Value) },
               {
                 RowNumber: row.Value,
-                Order: Coalesce(_item.Order, row.Value),
-                Key: Coalesce(Text(_item.Key), Text(_item.X), Text(row.Value)),
-                Value: Coalesce(_item.Value, Coalesce(_item.Y, 0)),
-                Label: Coalesce(Text(_item.Label), Text(_item.Key), Text(_item.X), ""),
-                Color: Coalesce(_item.Color, ""),
+                Order:   Coalesce(_item.Order, row.Value),
+                Key:     Coalesce(Text(_item.Key), Text(_item.X), Text(row.Value)),
+                Value:   Coalesce(_item.Value, Coalesce(_item.Y, 0)),
+                Label:   Coalesce(Text(_item.Label), Text(_item.Key), Text(_item.X), ""),
+                Color:   Coalesce(_item.Color, ""),
                 Explode: Coalesce(_item.Explode, false)
               }
             )
@@ -423,139 +435,276 @@ ComponentDefinitions:
           varItemsSorted,
           If(
             Coalesce(Self.SortByValue, false),
-            SortByColumns(
-              varItemsNormalized,
-              "Value", SortOrder.Descending,
-              "Order", SortOrder.Ascending
-            ),
-            SortByColumns(
-              varItemsNormalized,
-              "Order", SortOrder.Ascending
-            )
+            SortByColumns(varItemsNormalized, "Value", SortOrder.Descending, "Order", SortOrder.Ascending),
+            SortByColumns(varItemsNormalized, "Order", SortOrder.Ascending)
           )
         );
 
-        Set(WedgeTotal,    Sum(varItemsSorted, Coalesce(Value, 0)));
-        If(WedgeTotal = 0, Set(WedgeTotal,1)); // avoid divide by 0 error later on
+        Set(WedgeTotal, Sum(varItemsSorted, Coalesce(Value, 0)));
+        If(WedgeTotal = 0, Set(WedgeTotal, 1));
         Set(WedgeStartRad, Coalesce(Self.StartRotation, 0) * Pi() / 180);
         Set(ArcScale,      Coalesce(Self.EndRotation, 360) / 360);
 
         // ====
-        // SECTION 5: SVG RADIUS WITH EXPLODE MARGIN + DONUT SETTINGS
+        // SECTION 5: SVG RADII + OUTSIDE LABEL MODE + DONUT SETTINGS
         // ====
-        // Reduce the SVG-space pie radius so that exploded slices
-        // stay within the 0-100 viewBox and are not cropped.
+        Set(varIsOutside, Coalesce(Self.WedgeLabelsOutside, false));
 
-        Set(varSvgR,    Max(10, 48 - Coalesce(Self.ExplodeDistance, 5)));
-        Set(varSvgRTxt, Max(10, 30 - Coalesce(Self.ExplodeDistance, 5)));
+        Set(varSvgR,
+          If(varIsOutside,
+            Max(10, 30 - Coalesce(Self.ExplodeDistance, 5)),
+            Max(10, 48 - Coalesce(Self.ExplodeDistance, 5))
+          )
+        );
+
+        Set(varSvgRTxt,
+          If(varIsOutside,
+            Max(10, 18 - Coalesce(Self.ExplodeDistance, 5)),
+            Max(10, 30 - Coalesce(Self.ExplodeDistance, 5))
+          )
+        );
+
+        Set(varLabelR,
+          If(varIsOutside, varSvgR + 2, varSvgR * 0.65)
+        );
+
+        Set(varLabelFS, If(varIsOutside, "4", "5"));
+
         Set(varDonutPct, Max(0, Min(100, Coalesce(Self.DonutHolePercent, 0))));
         Set(varHoleR, varSvgR * varDonutPct / 100);
         Set(varHoleStartAngle, WedgeStartRad);
-        Set(varHoleEndAngle, WedgeStartRad + 2 * Pi() * ArcScale);
+        Set(varHoleEndAngle,   WedgeStartRad + 2 * Pi() * ArcScale);
 
         // ====
         // SECTION 6: BUILD varSlices
         // ====
         Set(palCount, CountRows(Self.Palette));
+
         Set(
-            varSlices,
-            ForAll(
-              varItemsSorted As SortedRec,
+          varSlices,
+          ForAll(
+            varItemsSorted As SortedRec,
+            With(
+              {
+                _cumSum:
+                  Coalesce(
+                    Sum(
+                      Filter(varItemsSorted As SliceRecord, SliceRecord.Order < SortedRec.Order),
+                      Coalesce(ThisRecord.Value, 0)
+                    ),
+                    0
+                  )
+              },
               With(
                 {
-                  _cumSum:
+                  _value:       SortedRec.Value,
+                  _valText:     Text(SortedRec.Value),
+                  _explode:     SortedRec.Explode,
+                  _explodeDist: Coalesce(Self.ExplodeDistance, 5),
+                  _startAngle:  WedgeStartRad
+                                + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))
+                                * 2 * Pi() * ArcScale,
+                  _color:
                     Coalesce(
-                      Sum(
-                        Filter(varItemsSorted As SliceRecord, SliceRecord.Order < SortedRec.Order),
-                        Coalesce(ThisRecord.Value, 0)
-                      ),
-                      0
+                      If(SortedRec.Color <> "", SortedRec.Color, Blank()),
+                      Index(
+                        Self.Palette,
+                        Mod(SortedRec.Order - 1, If(palCount = 0, 1, palCount)) + 1
+                      ).Value,
+                      "#D1D5DB"
                     )
                 },
                 With(
                   {
-                    _value:      SortedRec.Value,
-                    _valText:    Text(SortedRec.Value),
-                    _explode:    SortedRec.Explode,
-                    _explodeDist: Coalesce(Self.ExplodeDistance, 5),
-                    _startAngle: WedgeStartRad
-                    + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))
-                    * 2 * Pi() * ArcScale,
-                    _color:
-                    Coalesce(
-                    If(SortedRec.Color <> "", SortedRec.Color, Blank()),
-                    Index(
-                    Self.Palette,
-                    Mod(SortedRec.Order - 1,
-                    If(palCount = 0, 1, palCount)) + 1
-                    ).Value,
-                    "#D1D5DB"
-                    )
+                    _sliceArc: (_value / If(WedgeTotal = 0, 1, WedgeTotal))
+                               * 2 * Pi() * ArcScale,
+                    _endAngle: WedgeStartRad
+                               + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))
+                               * 2 * Pi() * ArcScale
+                               + (_value / If(WedgeTotal = 0, 1, WedgeTotal))
+                               * 2 * Pi() * ArcScale
                   },
                   With(
                     {
-                    _sliceArc: (_value / If(WedgeTotal = 0, 1, WedgeTotal))
-                    * 2 * Pi() * ArcScale,
-                    _endAngle: WedgeStartRad
-                    + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))
-                    * 2 * Pi() * ArcScale
-                    + (_value / If(WedgeTotal = 0, 1, WedgeTotal))
-                    * 2 * Pi() * ArcScale
+                      _midAngle: WedgeStartRad
+                                 + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))
+                                 * 2 * Pi() * ArcScale
+                                 + (_value / If(WedgeTotal = 0, 1, WedgeTotal))
+                                 * Pi() * ArcScale
                     },
                     With(
-                    {
-                    _midAngle: WedgeStartRad
-                    + (_cumSum / If(WedgeTotal = 0, 1, WedgeTotal))
-                    * 2 * Pi() * ArcScale
-                    + (_value / If(WedgeTotal = 0, 1, WedgeTotal))
-                    * Pi() * ArcScale
-                    },
-                    With(
-                    {
-                    _offsetX: If(_explode,  _explodeDist * Sin(_midAngle), 0),
-                    _offsetY: If(_explode, -(_explodeDist * Cos(_midAngle)), 0)
-                    },
-                    With(
-                    {
-                    _tooltip: _valText & " (" & Text(If(WedgeTotal > 0, _value / WedgeTotal, 0), Coalesce(Self.PercentFormat, "[$-en-US]0.0%")) & ")"
-                    },
-                    With(
-                    {
-                    _label: Coalesce(SortedRec.Label, SortedRec.Key & " " & _tooltip)
-                    },
-                    {
-                    Order:      SortedRec.Order,
-                    Key:        SortedRec.Key,
-                    Label:      _label,
-                    Value:      _value,
-                    RGBColor:   _color,
-                    Explode:    _explode,
-                    Color:      ColorValue(_color),
-                    StartAngle: _startAngle,
-                    EndAngle:   _endAngle,
-                    MidAngle:   _midAngle,
-                    NormStart:  Mod(_startAngle, 2 * Pi()),
-                    NormEnd:    Mod(_endAngle,   2 * Pi()),
-                    OffsetX:    _offsetX,
-                    OffsetY:    _offsetY,
-                    X1: Text(50 + varSvgR * Sin(_startAngle), "[$-en-US]0.0000"),
-                    Y1: Text(50 - varSvgR * Cos(_startAngle), "[$-en-US]0.0000"),
-                    X2: Text(50 + varSvgR * Sin(_endAngle),   "[$-en-US]0.0000"),
-                    Y2: Text(50 - varSvgR * Cos(_endAngle),   "[$-en-US]0.0000"),
-                    MidX: Text(50 + varSvgRTxt * Sin(_midAngle) + _offsetX, "[$-en-US]0.0000"),
-                    MidY: Text(50 - varSvgRTxt * Cos(_midAngle) + _offsetY, "[$-en-US]0.0000"),
-                    LabelX: Text(50 + (varSvgR * 0.65) * Sin(_midAngle) + _offsetX, "[$-en-US]0.0000"),
-                    LabelY: Text(50 - (varSvgR * 0.65) * Cos(_midAngle) + _offsetY, "[$-en-US]0.0000"),
-                    tooltip: SortedRec.Key & ": " & _tooltip
-                    }
+                      {
+                        _offsetX: If(_explode,  _explodeDist * Sin(_midAngle), 0),
+                        _offsetY: If(_explode, -(_explodeDist * Cos(_midAngle)), 0)
+                      },
+                      With(
+                        {
+                          _tooltip:
+                            _valText & " (" &
+                            Text(
+                              If(WedgeTotal > 0, _value / WedgeTotal * 100, 0),
+                              Coalesce(Self.PercentFormat, "[$-en-US]0.0")
+                            ) & "%)"
+                        },
+                        With(
+                          {
+                            _label: Coalesce(SortedRec.Label, SortedRec.Key & " " & _tooltip),
+                            _lxn:   50 + varLabelR * Sin(_midAngle) + _offsetX,
+                            _lyn:   50 - varLabelR * Cos(_midAngle) + _offsetY
+                          },
+                          {
+                            Order:      SortedRec.Order,
+                            Key:        SortedRec.Key,
+                            Label:      Substitute(Substitute(Substitute(_label, "&", "&amp;"), "<​", "&lt;"), ">", "&gt;"),
+                            Value:      _value,
+                            RGBColor:   _color,
+                            Explode:    _explode,
+                            Color:      ColorValue(_color),
+                            StartAngle: _startAngle,
+                            EndAngle:   _endAngle,
+                            MidAngle:   _midAngle,
+                            NormStart:  Mod(_startAngle, 2 * Pi()),
+                            NormEnd:    Mod(_endAngle,   2 * Pi()),
+                            OffsetX:    _offsetX,
+                            OffsetY:    _offsetY,
+                            X1:      Text(50 + varSvgR * Sin(_startAngle), "[$-en-US]0.0000"),
+                            Y1:      Text(50 - varSvgR * Cos(_startAngle), "[$-en-US]0.0000"),
+                            X2:      Text(50 + varSvgR * Sin(_endAngle),   "[$-en-US]0.0000"),
+                            Y2:      Text(50 - varSvgR * Cos(_endAngle),   "[$-en-US]0.0000"),
+                            MidX:    Text(50 + varSvgRTxt * Sin(_midAngle) + _offsetX, "[$-en-US]0.0000"),
+                            MidY:    Text(50 - varSvgRTxt * Cos(_midAngle) + _offsetY, "[$-en-US]0.0000"),
+                            LabelX:  Text(_lxn, "[$-en-US]0.0000"),
+                            LabelY:  Text(_lyn, "[$-en-US]0.0000"),
+                            LabelXN: _lxn,
+                            LabelYN: _lyn,
+                            tooltip: SortedRec.Key & ": " & _tooltip
+                          }
+                        )
+                      )
                     )
-                    )
-                    )
-                  )
                   )
                 )
               )
             )
+          )
+        );
+
+        // ====
+        // SECTION 6B: OUTSIDE LABEL PLACEMENT -- EDGE AVOIDANCE + COLLISION AVOIDANCE
+        // ====
+        // Only active when WedgeLabelsOutside = true; inside mode passes through unchanged.
+        //
+        // STEP 1 -- EDGE AVOIDANCE:
+        //   Estimate text width as Len(Label) * varCharW viewBox units.
+        //   varCharW = 2.3: approximate character width at font-size 4.
+        //   varMaxX = 97: right safe boundary. varMinX = 3: left safe boundary.
+        //
+        //   Right side (text-anchor=start): if anchorX + textW > varMaxX,
+        //     shift anchor left by HALF the overflow distance only.
+        //     Never pull past x=52.
+        //
+        //   Left side (text-anchor=end): if anchorX - textW < varMinX,
+        //     push anchor right by HALF the underflow distance only.
+        //     Never push past x=48.
+        //
+        //   Y is NOT recomputed -- natural LabelYN preserved for rank-push.
+        //
+        // STEP 2 -- COLLISION AVOIDANCE:
+        //   Split into right/left sides, sort top-to-bottom by natural LabelYN.
+        //   Stack base starts half a spacing unit ABOVE the topmost natural Y so
+        //   labels near the top of the pie can spread upward as well as downward.
+        //   _rank = 0-based count of labels above this one on the same side.
+        //   AdjLabelY = Max(naturalY, stackBase + rank * varLabelSpacing).
+        //   varLabelSpacing = 5 (slightly tighter than before for better fit).
+
+        Set(varCharW,        2.3);
+        Set(varMaxX,         97);
+        Set(varMinX,         3);
+        Set(varLabelSpacing, 5);
+
+        Set(
+          varSlicesAdjusted,
+          If(
+            Not(varIsOutside),
+            AddColumns(
+              varSlices,
+              AdjLabelX,   LabelXN,
+              AdjLabelY,   LabelYN,
+              LabelAnchor, "middle"
+            ),
+
+            With(
+              {
+                _edgeAdj:
+                  AddColumns(
+                    varSlices,
+                    _isRight, Sin(MidAngle) >= 0,
+                    _edgeX,
+                      If(
+                        Sin(MidAngle) >= 0,
+                        // Right side: shift left by half the overflow only
+                        If(
+                          LabelXN + Len(Label) * varCharW > varMaxX,
+                          Max(52, LabelXN - (LabelXN + Len(Label) * varCharW - varMaxX) * 0.5),
+                          LabelXN
+                        ),
+                        // Left side: shift right by half the underflow only
+                        If(
+                          LabelXN - Len(Label) * varCharW < varMinX,
+                          Min(48, LabelXN + (varMinX - (LabelXN - Len(Label) * varCharW)) * 0.5),
+                          LabelXN
+                        )
+                      )
+                  )
+              },
+
+              With(
+                {
+                  _right: Sort(Filter(_edgeAdj, _isRight),  LabelYN, SortOrder.Ascending),
+                  _left:  Sort(Filter(_edgeAdj, !_isRight), LabelYN, SortOrder.Ascending)
+                },
+                With(
+                  {
+                    // Stack base starts half a spacing above topmost label
+                    // so the top of the stack can spread upward too
+                    _rightBase: First(_right).LabelYN - varLabelSpacing * 0.5,
+                    _leftBase:  First(_left).LabelYN  - varLabelSpacing * 0.5
+                  },
+                  Ungroup(
+                    Table(
+                      {
+                        Value:
+                          AddColumns(
+                            AddColumns(
+                              _right,
+                              _rank,
+                              CountRows(Filter(_right, LabelYN < ThisRecord.LabelYN))
+                            ),
+                            AdjLabelX,   _edgeX,
+                            AdjLabelY,   Max(LabelYN, _rightBase + _rank * varLabelSpacing),
+                            LabelAnchor, "start"
+                          )
+                      },
+                      {
+                        Value:
+                          AddColumns(
+                            AddColumns(
+                              _left,
+                              _rank,
+                              CountRows(Filter(_left, LabelYN < ThisRecord.LabelYN))
+                            ),
+                            AdjLabelX,   _edgeX,
+                            AdjLabelY,   Max(LabelYN, _leftBase + _rank * varLabelSpacing),
+                            LabelAnchor, "end"
+                          )
+                      }
+                    ),
+                    Value
+                  )
+                )
+              )
+            )
+          )
         );
 
         // ====
@@ -565,26 +714,27 @@ ComponentDefinitions:
           varSVG,
           If(
             Or(WedgeTotal <= 0, IsEmpty(varSlices)),
-            // Empty state SVG (unchanged)
-            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>" &
-            "<circle cx='50' cy='50' r='48' fill='#F3F4F6' stroke='#E5E7EB' stroke-width='1'/>" &
-            "<path d='M 50 50 L 50 2 A 48 48 0 0 1 91.6 26 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>" &
-            "<path d='M 50 50 L 91.6 26 A 48 48 0 0 1 91.6 74 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>" &
-            "<path d='M 50 50 L 91.6 74 A 48 48 0 0 1 50 98 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>" &
-            "<path d='M 50 50 L 50 98 A 48 48 0 0 1 8.4 74 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>" &
-            "<path d='M 50 50 L 8.4 74 A 48 48 0 0 1 8.4 26 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>" &
-            "<path d='M 50 50 L 8.4 26 A 48 48 0 0 1 50 2 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>" &
+
+            // Empty state SVG
+            "<​svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>" &
+            "<​circle cx='50' cy='50' r='48' fill='#F3F4F6' stroke='#E5E7EB' stroke-width='1'/>" &
+            "<​path d='M 50 50 L 50 2 A 48 48 0 0 1 91.6 26 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<​path d='M 50 50 L 91.6 26 A 48 48 0 0 1 91.6 74 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<​path d='M 50 50 L 91.6 74 A 48 48 0 0 1 50 98 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<​path d='M 50 50 L 50 98 A 48 48 0 0 1 8.4 74 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<​path d='M 50 50 L 8.4 74 A 48 48 0 0 1 8.4 26 Z' fill='#E5E7EB' stroke='#F9FAFB' stroke-width='1.5'/>" &
+            "<​path d='M 50 50 L 8.4 26 A 48 48 0 0 1 50 2 Z' fill='#DBEAFE' stroke='#F9FAFB' stroke-width='1.5'/>" &
             If(
               varHoleR > 0,
-              "<circle cx='50' cy='50' r='" & Text(varHoleR, "[$-en-US]0.0###") & "' fill='" & Coalesce(Self.ChartFill, "#FAFAFA") & "'/>",
+              "<​circle cx='50' cy='50' r='" & Text(varHoleR, "[$-en-US]0.0###") &
+              "' fill='" & Coalesce(Self.ChartFill, "#FAFAFA") & "'/>",
               ""
             ) &
-            "</svg>",
+            "<​/svg>",
 
-            // Data SVG with wedges and optional labels
-            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>" &
+            // Data SVG
+            "<​svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>" &
 
-            // Draw all wedge paths
             Concat(
               varSlices,
               "<path transform='translate(" &
@@ -592,45 +742,48 @@ ComponentDefinitions:
               Text(OffsetY, "[$-en-US]0.0000") &
               ")' d='M 50 50 L " &
               X1 & " " & Y1 &
-              " A " & Text(varSvgR, "[$-en-US]0.0###") & " " & Text(varSvgR, "[$-en-US]0.0###") & " 0 " &
+              " A " & Text(varSvgR, "[$-en-US]0.0###") & " " &
+                      Text(varSvgR, "[$-en-US]0.0###") & " 0 " &
               If((EndAngle - StartAngle) > Pi(), "1", "0") &
-              " 1 " &
-              X2 & " " & Y2 &
+              " 1 " & X2 & " " & Y2 &
               " Z' fill='" & RGBColor &
               "' stroke='" & Coalesce(Self.StrokeColor, "white") &
-              "' stroke-width='" &
-              Text(Coalesce(Self.StrokeWidth, 1), "[$-en-US]0.0#") &
+              "' stroke-width='" & Text(Coalesce(Self.StrokeWidth, 1), "[$-en-US]0.0#") &
               "'/>"
             ) &
 
-            // Draw wedge labels (if enabled and wedge is large enough)
             If(
               Coalesce(Self.ShowWedgeLabel, false),
               Concat(
-                varSlices,
+                varSlicesAdjusted,
                 If(
                   (EndAngle - StartAngle) >= (Max(0, Coalesce(Self.MinLabelAngle, 10)) * Pi() / 180),
-                  "<text x='" & LabelX &
-                  "' y='" & LabelY &
-                  "' text-anchor='middle' dominant-baseline='middle' fill='white' font-size='5' font-family='Segoe UI' font-weight='600'>" &
+                  "<​text x='" & Text(AdjLabelX, "[$-en-US]0.0000") &
+                  "' y='" & Text(AdjLabelY, "[$-en-US]0.0000") &
+                  "' text-anchor='" & LabelAnchor &
+                  "' dominant-baseline='middle'" &
+                  " fill='" & Coalesce(Self.WedgeLabelColor, "white") &
+                  "' font-size='" & varLabelFS &
+                  "' font-family='Segoe UI' font-weight='600'>" &
                   Label &
-                  "</text>",
+                  "<​/text>",
                   ""
                 )
               ),
               ""
             ) &
 
-            // Draw donut hole overlay using ChartFill color (supports full and partial arcs)
             If(
               varHoleR > 0,
               If(
                 ArcScale >= 1,
-                "<circle cx='50' cy='50' r='" & Text(varHoleR, "[$-en-US]0.0###") & "' fill='" & Coalesce(Self.ChartFill, "#FAFAFA") & "'/>",
+                "<​circle cx='50' cy='50' r='" & Text(varHoleR, "[$-en-US]0.0###") &
+                "' fill='" & Coalesce(Self.ChartFill, "#FAFAFA") & "'/>",
                 "<path d='M 50 50 L " &
                 Text(50 + varHoleR * Sin(varHoleStartAngle), "[$-en-US]0.0000") & " " &
                 Text(50 - varHoleR * Cos(varHoleStartAngle), "[$-en-US]0.0000") &
-                " A " & Text(varHoleR, "[$-en-US]0.0###") & " " & Text(varHoleR, "[$-en-US]0.0###") & " 0 " &
+                " A " & Text(varHoleR, "[$-en-US]0.0###") & " " &
+                        Text(varHoleR, "[$-en-US]0.0###") & " 0 " &
                 If((varHoleEndAngle - varHoleStartAngle) > Pi(), "1", "0") & " 1 " &
                 Text(50 + varHoleR * Sin(varHoleEndAngle), "[$-en-US]0.0000") & " " &
                 Text(50 - varHoleR * Cos(varHoleEndAngle), "[$-en-US]0.0000") &
@@ -639,12 +792,12 @@ ComponentDefinitions:
               ""
             ) &
 
-            "</svg>"
+            "<​/svg>"
           )
         );
 
-        // make sure it matches an actual key, otherwise ignore it
-        If(IsBlank(LookUp(Self.Items, Key=varHoveredKey || X=varHoveredKey)),Set(varHoveredKey,""));
+        // make sure varHoveredKey matches an actual key, otherwise clear it
+        If(IsBlank(LookUp(Self.Items, Key = varHoveredKey || X = varHoveredKey)), Set(varHoveredKey, ""));
 
         // ====
         // SECTION 8: BUILD varButtonSlices
@@ -653,9 +806,8 @@ ComponentDefinitions:
         Set(btnH,   2 * PieRadius / gridN);
         Set(gridOX, ChartCenterX - PieRadius);
         Set(gridOY, ChartCenterY - PieRadius);
-        // adjust to match pie if shrunk some for exploded pieces
-        Set(PieRadiusAdjusted, PieRadius * varSvgR/50);
-        Set(r2,     PieRadiusAdjusted * PieRadiusAdjusted);
+        Set(PieRadiusAdjusted, PieRadius * varSvgR / 50);
+        Set(r2, PieRadiusAdjusted * PieRadiusAdjusted);
 
         Set(
           varButtonSlices,
@@ -673,7 +825,6 @@ ComponentDefinitions:
               // ====
               // IMPLEMENTATION A: single center-point Atan2 per cell
               // ====
-              // Uncomment this block and comment out Implementation B to use.
               /*
               With(
                 {
@@ -689,34 +840,34 @@ ComponentDefinitions:
                   If(
                     _d2 <= r2 And _d2 > 0,
                     With(
-                    {
-                    _angle: Mod(
-                    If(
-                    _ndy > 0,       Atan(_dx / _ndy),
-                    _ndy < 0 And _dx >= 0, Atan(_dx / _ndy) + Pi(),
-                    _ndy < 0,       Atan(_dx / _ndy) - Pi(),
-                    _dx > 0,        Pi() / 2,
-                    -Pi() / 2
-                    ) + 2 * Pi(),
-                    2 * Pi()
-                    )
-                    },
-                    {
-                    Ni: _i,
-                    Mj: _j,
-                    SliceOrder:
-                    Coalesce(
-                    LookUp(
-                    varSlices,
-                    If(
-                    NormStart < NormEnd,
-                    _angle >= NormStart And _angle < NormEnd,
-                    _angle >= NormStart Or  _angle < NormEnd
-                    )
-                    ).Order,
-                    Blank()
-                    )
-                    }
+                      {
+                        _angle: Mod(
+                          If(
+                            _ndy > 0,              Atan(_dx / _ndy),
+                            _ndy < 0 And _dx >= 0, Atan(_dx / _ndy) + Pi(),
+                            _ndy < 0,              Atan(_dx / _ndy) - Pi(),
+                            _dx > 0,               Pi() / 2,
+                                                  -Pi() / 2
+                          ) + 2 * Pi(),
+                          2 * Pi()
+                        )
+                      },
+                      {
+                        Ni: _i,
+                        Mj: _j,
+                        SliceOrder:
+                          Coalesce(
+                            LookUp(
+                              varSlices,
+                              If(
+                                NormStart < NormEnd,
+                                _angle >= NormStart And _angle < NormEnd,
+                                _angle >= NormStart Or  _angle < NormEnd
+                              )
+                            ).Order,
+                            Blank()
+                          )
+                      }
                     ),
                     { Ni: _i, Mj: _j, SliceOrder: Blank() }
                   )
@@ -731,61 +882,57 @@ ComponentDefinitions:
                 {
                   _hits:
                     ForAll(
-                    Sequence(sampleSize * sampleSize) As s,
-                    {
-                    wedge:
-                    With(
-                    {
-                    _sx: _xMin
-                    + (RoundDown((s.Value - 1) / sampleSize, 0) + 0.5)
-                    * btnW / sampleSize,
-                    _sy: _yMin
-                    + (Mod(s.Value - 1, sampleSize) + 0.5)
-                    * btnH / sampleSize
-                    },
-                    With(
-                    {
-                    _dx:  _sx - ChartCenterX,
-                    _ndy: ChartCenterY - _sy,
-                    _d2:  Power(_sx - ChartCenterX, 2)
-                    + Power(ChartCenterY - _sy, 2)
-                    },
-                    If(
-                    _d2 <= r2 And _d2 > 0,
-                    With(
-                    {
-                    _angle: Mod(
-                    If(
-                    _ndy > 0,
-                    Atan(_dx / _ndy),
-                    _ndy < 0 And _dx >= 0,
-                    Atan(_dx / _ndy) + Pi(),
-                    _ndy < 0,
-                    Atan(_dx / _ndy) - Pi(),
-                    _dx > 0,
-                    Pi() / 2,
-                    -Pi() / 2
-                    ) + 2 * Pi(),
-                    2 * Pi()
-                    )
-                    },
-                    Coalesce(
-                    LookUp(
-                    varSlices,
-                    If(
-                    NormStart < NormEnd,
-                    _angle >= NormStart And _angle < NormEnd,
-                    _angle >= NormStart Or  _angle < NormEnd
-                    )
-                    ).Order,
-                    -1
-                    )
-                    ),
-                    -1
-                    )
-                    )
-                    )
-                    }
+                      Sequence(sampleSize * sampleSize) As s,
+                      {
+                        wedge:
+                          With(
+                            {
+                              _sx: _xMin
+                                   + (RoundDown((s.Value - 1) / sampleSize, 0) + 0.5)
+                                   * btnW / sampleSize,
+                              _sy: _yMin
+                                   + (Mod(s.Value - 1, sampleSize) + 0.5)
+                                   * btnH / sampleSize
+                            },
+                            With(
+                              {
+                                _dx:  _sx - ChartCenterX,
+                                _ndy: ChartCenterY - _sy,
+                                _d2:  Power(_sx - ChartCenterX, 2)
+                                      + Power(ChartCenterY - _sy, 2)
+                              },
+                              If(
+                                _d2 <= r2 And _d2 > 0,
+                                With(
+                                  {
+                                    _angle: Mod(
+                                      If(
+                                        _ndy > 0,              Atan(_dx / _ndy),
+                                        _ndy < 0 And _dx >= 0, Atan(_dx / _ndy) + Pi(),
+                                        _ndy < 0,              Atan(_dx / _ndy) - Pi(),
+                                        _dx > 0,               Pi() / 2,
+                                                              -Pi() / 2
+                                      ) + 2 * Pi(),
+                                      2 * Pi()
+                                    )
+                                  },
+                                  Coalesce(
+                                    LookUp(
+                                      varSlices,
+                                      If(
+                                        NormStart < NormEnd,
+                                        _angle >= NormStart And _angle < NormEnd,
+                                        _angle >= NormStart Or  _angle < NormEnd
+                                      )
+                                    ).Order,
+                                    -1
+                                  )
+                                ),
+                                -1
+                              )
+                            )
+                          )
+                      }
                     )
                 },
 
@@ -795,29 +942,29 @@ ComponentDefinitions:
                     _valid = 0,
                     { Ni: _i, Mj: _j, SliceOrder: Blank() },
                     With(
-                    {
-                    _best: First(
-                    Sort(
-                    AddColumns(
-                    varSlices,
-                    _cnt,
-                    CountIf(_hits, wedge = Order)
-                    ),
-                    _cnt,
-                    SortOrder.Descending
-                    )
-                    )
-                    },
-                    {
-                    Ni: _i,
-                    Mj: _j,
-                    SliceOrder:
-                    If(
-                    _best._cnt / _valid >= threshold,
-                    _best.Order,
-                    Blank()
-                    )
-                    }
+                      {
+                        _best: First(
+                          Sort(
+                            AddColumns(
+                              varSlices,
+                              _cnt,
+                              CountIf(_hits, wedge = Order)
+                            ),
+                            _cnt,
+                            SortOrder.Descending
+                          )
+                        )
+                      },
+                      {
+                        Ni: _i,
+                        Mj: _j,
+                        SliceOrder:
+                          If(
+                            _best._cnt / _valid >= threshold,
+                            _best.Order,
+                            Blank()
+                          )
+                      }
                     )
                   )
                 )
@@ -1191,7 +1338,7 @@ ComponentDefinitions:
           Properties:
             Height: =If(Self.Visible, 22, 1)
             OnSelect: =Reset(Parent)
-            Visible: =debugResetVisible // || true
+            Visible: =debugResetVisible  || true
             Width: =If(Self.Visible,50,1)
             X: =10
             Y: =10
